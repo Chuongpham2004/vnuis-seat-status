@@ -27,8 +27,8 @@ export const subscribeToSeatStatus = (callback) => {
     console.log("📌 Bắt đầu subscribe đến Firebase...");
 
     // Đường dẫn đến node trạng thái mà ESP32 đã gửi (SEAT C01)
-    const seatRef = ref(db, 'connection_status/library_seats/SEAT_C01/status');
-    console.log("📍 Đang lắng nghe path: connection_status/library_seats/SEAT_C01/status");
+    const seatRef = ref(db, '/library_seats/SEAT_C01/status');
+    console.log("📍 Đang lắng nghe path: /library_seats/SEAT_C01/status");
 
     // onValue sẽ kích hoạt ngay lập tức và mỗi khi dữ liệu thay đổi
     const unsubscribe = onValue(seatRef, (snapshot) => {
