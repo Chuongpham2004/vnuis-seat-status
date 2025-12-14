@@ -22,7 +22,46 @@ const db = getDatabase(app);
 console.log("🔥 Firebase đã được khởi tạo thành công!");
 console.log("📡 Database URL:", firebaseConfig.databaseURL);
 
-// Hàm lắng nghe trạng thái chỗ ngồi theo thời gian thực
+// Danh sách các ghế trong thư viện
+const SEAT_IDS = ['SEAT_C01', 'SEAT_C02', 'SEAT_C03', 'SEAT_C04', 'SEAT_C05'];
+
+// Hàm lắng nghe trạng thái tất cả ghế theo thời gian thực
+export const subscribeToAllSeats = (callback) => {
+    console.log("📌 Bắt đầu subscribe đến tất cả ghế trong Firebase...");
+
+    const unsubscribes = [];
+    const seatStatuses = {};
+
+    // Khởi tạo trạng thái null cho tất cả ghế
+    SEAT_IDS.forEach(seatId => {
+        seatStatuses[seatId] = null;
+    });
+
+    // Subscribe đến từng ghế
+    SEAT_IDS.forEach(seatId => {
+        const seatRef = ref(db, `/library_seats/${seatId}/status`);
+        console.log(`📍 Đang lắng nghe path: /library_seats/${seatId}/status`);
+
+        const unsubscribe = onValue(seatRef, (snapshot) => {
+            console.log(`📦 Nhận được dữ liệu từ ${seatId}:`, snapshot.val());
+            seatStatuses[seatId] = snapshot.val();
+            // Gọi callback với bản sao của object để React nhận ra thay đổi
+            callback({ ...seatStatuses });
+        }, (error) => {
+            console.error(`❌ LỖI Firebase cho ${seatId}:`, error.message);
+        });
+
+        unsubscribes.push(unsubscribe);
+    });
+
+    // Trả về hàm cleanup để hủy tất cả subscriptions
+    return () => {
+        console.log("🛑 Ngừng lắng nghe tất cả ghế");
+        unsubscribes.forEach(unsubscribe => unsubscribe());
+    };
+};
+
+// Hàm lắng nghe trạng thái chỗ ngồi theo thời gian thực (giữ cho tương thích ngược)
 export const subscribeToSeatStatus = (callback) => {
     console.log("📌 Bắt đầu subscribe đến Firebase...");
 
@@ -48,3 +87,6 @@ export const subscribeToSeatStatus = (callback) => {
 
     return unsubscribe; // Trả về hàm hủy đăng ký (cleanup)
 };
+
+// Export danh sách ghế để sử dụng trong components
+export { SEAT_IDS };
