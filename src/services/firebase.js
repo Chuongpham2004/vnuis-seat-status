@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue } from "firebase/database";
+import { getDatabase, ref, onValue, set } from "firebase/database";
 
 // **************************************************
 // CẤU HÌNH FIREBASE CỦA BẠN ĐÃ LẤY TỪ CONSOLE
@@ -86,6 +86,20 @@ export const subscribeToSeatStatus = (callback) => {
     });
 
     return unsubscribe; // Trả về hàm hủy đăng ký (cleanup)
+};
+
+// Hàm cập nhật trạng thái ghế lên Firebase
+export const updateSeatStatus = async (seatId, newStatus) => {
+    console.log(`📝 Đang cập nhật ${seatId} thành ${newStatus}...`);
+    try {
+        const seatRef = ref(db, `/library_seats/${seatId}/status`);
+        await set(seatRef, newStatus);
+        console.log(`✅ Đã cập nhật ${seatId} thành ${newStatus} thành công!`);
+        return true;
+    } catch (error) {
+        console.error(`❌ Lỗi khi cập nhật ${seatId}:`, error.message);
+        return false;
+    }
 };
 
 // Export danh sách ghế để sử dụng trong components

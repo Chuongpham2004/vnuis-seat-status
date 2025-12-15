@@ -1,9 +1,10 @@
 import React from 'react';
 
-const SeatCard = ({ seatId, status, isRealSensor = false }) => {
+const SeatCard = ({ seatId, status, isRealSensor = false, onToggle }) => {
     const displayName = seatId.replace('SEAT_', '');
     const isLoading = status === null;
     const isOccupied = status === 1;
+    const isClickable = !isRealSensor && !isLoading;
 
     // Determine status colors and text
     const getStatusInfo = () => {
@@ -56,13 +57,23 @@ const SeatCard = ({ seatId, status, isRealSensor = false }) => {
 
     const statusInfo = getStatusInfo();
 
+    const handleClick = () => {
+        if (isClickable && onToggle) {
+            const newStatus = isOccupied ? 0 : 1;
+            onToggle(seatId, newStatus);
+        }
+    };
+
     return (
         <div
+            onClick={handleClick}
             className={`
         glass-card rounded-2xl p-5 text-center
         transform transition-all duration-500 hover:scale-[1.03] hover:-translate-y-1
         ${statusInfo.borderColor} ${statusInfo.shadowColor}
+        ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-white/30' : ''}
       `}
+            title={isClickable ? 'Click để đổi trạng thái' : (isRealSensor ? 'Đây là cảm biến thực' : '')}
         >
             {/* Sensor Badge */}
             <div className="flex justify-between items-center mb-3">
@@ -103,6 +114,13 @@ const SeatCard = ({ seatId, status, isRealSensor = false }) => {
             <p className={`text-sm font-bold ${statusInfo.statusColor} transition-all duration-300`}>
                 {statusInfo.statusText}
             </p>
+
+            {/* Click hint for simulated seats */}
+            {isClickable && (
+                <p className="text-[10px] text-white/40 mt-2">
+                    👆 Click để đổi trạng thái
+                </p>
+            )}
         </div>
     );
 };

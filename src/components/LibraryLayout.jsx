@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { subscribeToAllSeats, SEAT_IDS } from '../services/firebase';
+import { subscribeToAllSeats, SEAT_IDS, updateSeatStatus } from '../services/firebase';
 import SeatCard from './SeatCard';
 
 const LibraryLayout = () => {
@@ -18,6 +18,12 @@ const LibraryLayout = () => {
             unsubscribe();
         };
     }, []);
+
+    // Handler for toggling seat status
+    const handleToggleSeat = async (seatId, newStatus) => {
+        console.log(`🔄 Toggle ${seatId} to ${newStatus}`);
+        await updateSeatStatus(seatId, newStatus);
+    };
 
     // Calculate statistics
     const totalSeats = SEAT_IDS.length;
@@ -68,6 +74,7 @@ const LibraryLayout = () => {
                                 seatId={seatId}
                                 status={seatStatuses[seatId]}
                                 isRealSensor={seatId === 'SEAT_C01'}
+                                onToggle={handleToggleSeat}
                             />
                         </div>
                     ))}
@@ -85,6 +92,7 @@ const LibraryLayout = () => {
                                 seatId={seatId}
                                 status={seatStatuses[seatId]}
                                 isRealSensor={false}
+                                onToggle={handleToggleSeat}
                             />
                         </div>
                     ))}
