@@ -2,17 +2,17 @@ import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue, set } from "firebase/database";
 
 // **************************************************
-// CẤU HÌNH FIREBASE CỦA BẠN ĐÃ LẤY TỪ CONSOLE
+// CẤU HÌNH FIREBASE TỪ ENVIRONMENT VARIABLES
 // **************************************************
 const firebaseConfig = {
-    apiKey: "AIzaSyAFi7xrclnQufDYp5rRbikXdNN_aYfFPUI",
-    authDomain: "vnuis-library-seat-management.firebaseapp.com",
-    databaseURL: "https://vnuis-library-seat-management-default-rtdb.asia-southeast1.firebasedatabase.app/",
-    projectId: "vnuis-library-seat-management",
-    storageBucket: "vnuis-library-seat-management.firebasestorage.app",
-    messagingSenderId: "983950508513",
-    appId: "1:983950508513:web:b66d5859594e21160712a0",
-    measurementId: "G-3NHQJXYMEC"
+    apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+    authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+    databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+    projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+    storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+    messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+    appId: import.meta.env.VITE_FIREBASE_APP_ID,
+    measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
 // Khởi tạo Firebase App
