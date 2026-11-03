@@ -1,0 +1,83 @@
+spring:
+  application:
+    name: backend-core
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5433/library}
+    username: ${DB_USER:app}
+    password: ${DB_PASSWORD:app_dev_pw}
+    hikari:
+      maximum-pool-size: 20
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+  data:
+    redis:
+      repositories:
+        enabled: false   # Redis is used via templates only, not Spring Data repositories
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  jackson:
+    default-property-inclusion: non_null
+
+server:
+  port: ${SERVER_PORT:8080}
+  error:
+    include-message: always
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  seat:
+    # Redis TTL timers. Override with env vars for tests / the live demo.
+    reservation-ttl-seconds: ${RESERVATION_TTL_SECONDS:900}   # 15 min no-show window
+    away-ttl-seconds: ${AWAY_TTL_SECONDS:1800}                # 30 min away window
+    walkin-grace-seconds: ${WALKIN_GRACE_SECONDS:120}         # presence held 2 min -> walk-in OCCUPIED
+    away-grace-seconds: ${AWAY_GRACE_SECONDS:60}              # absence held 1 min -> AWAY
+    lock-lease-seconds: 5                                     # lock:seat:booking:{seat} lease
+    lock-wait-millis: 3000                                    # how long system events wait for the seat lock
+    reconcile-interval-ms: ${RECONCILE_INTERVAL_MS:30000}
+    reconcile-grace-seconds: 2
+  credit:
+    min-to-book: 60
+    no-show-penalty: 10
+    on-time-reward: 2
+    max-score: 100
+    ban-days: 3
+  jwt:
+    secret: ${JWT_SECRET:change-me-dev-only-secret-at-least-32-bytes-long}
+    ttl-minutes: ${JWT_TTL_MINUTES:480}
+  mqtt:
+    url: ${MQTT_URL:tcp://localhost:1883}
+    username: ${MQTT_USER:backend}
+    password: ${MQTT_PASSWORD:backend_dev_pw}
+    client-id-prefix: backend-core
+    telemetry-topic: library/zone/+/seat/+/telemetry
+    status-topic: library/zone/+/seat/+/status
+  redis:
+    # Value applied with CONFIG SET only if the server has notifications switched off.
+    keyspace-notifications: Ex
+  cors:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
+  stats:
+    zone-id: Asia/Ho_Chi_Minh
+    # Inclusive date ranges, e.g. 2026-12-14/2027-01-10
+    exam-periods: ${EXAM_PERIODS:2026-12-14/2027-01-10}
+
+logging:
+  level:
+    vn.vnuis.library: INFO
+    org.eclipse.paho: WARN

@@ -1,0 +1,5 @@
+# Profile used inside docker-compose. Connection settings come from env vars
+# (DB_URL, REDIS_HOST, MQTT_URL, ...) set in infra/docker-compose.yml.
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%thread] %logger{36} - %msg%n"

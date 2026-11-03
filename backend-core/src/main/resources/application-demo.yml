@@ -1,0 +1,9 @@
+# Short timers for the live thesis defense: SPRING_PROFILES_ACTIVE=docker,demo
+# Env vars (RESERVATION_TTL_SECONDS, ...) still win over these values.
+app:
+  seat:
+    reservation-ttl-seconds: ${RESERVATION_TTL_SECONDS:60}
+    away-ttl-seconds: ${AWAY_TTL_SECONDS:90}
+    walkin-grace-seconds: ${WALKIN_GRACE_SECONDS:20}
+    away-grace-seconds: ${AWAY_GRACE_SECONDS:10}
+    reconcile-interval-ms: ${RECONCILE_INTERVAL_MS:10000}
