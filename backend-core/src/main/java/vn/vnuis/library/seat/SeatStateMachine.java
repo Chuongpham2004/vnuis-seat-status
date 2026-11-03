@@ -352,6 +352,26 @@ public class SeatStateMachine {
 
     /** Absence grace elapsed: OCCUPIED + still nobody -> AWAY and start the 30-min away timer. */
     public void onAwayPendingTimer(String seatCode) {
+        markAway(seatCode, false);
+    }
+
+    /**
+     * The seat's sensor went OFFLINE (Last Will, or found offline at startup). Presence can no
+     * longer be observed, so it is treated as "nobody there": an OCCUPIED seat goes AWAY at once and
+     * the normal 30-min away timer releases it unless the device comes back and sees the student.
+     * Without this, a dead sensor would freeze its seat in OCCUPIED forever.
+     */
+    public void onDeviceOffline(String seatCode) {
+        if (store.find(seatCode).isEmpty()) {
+            return;
+        }
+        store.updatePhysical(seatCode, false, null);
+        timers.cancelWalkin(seatCode);
+        timers.cancelAwayPending(seatCode);
+        markAway(seatCode, true);
+    }
+
+    private void markAway(String seatCode, boolean deviceOffline) {
         SeatInfo seat = catalog.require(seatCode);
         locks.withLock(seatCode, props.lockWaitMillis(), () -> {
             SeatState state = store.require(seatCode);
@@ -363,10 +383,12 @@ public class SeatStateMachine {
             timers.startAway(seatCode, props.awayTtl());
             publish(state.withStatus(SeatStatus.AWAY));
             Instant deadline = now.plus(props.awayTtl());
-            broadcaster.notifyUser(state.currentUserUuid(), "AWAY_STARTED",
-                    "You left seat " + seatCode + ". It will be released at " + deadline + " unless you return.",
-                    data("seatCode", seatCode, "releaseAt", deadline));
-            log.info("AWAY {} - release at {}", seatCode, deadline);
+            broadcaster.notifyUser(state.currentUserUuid(), "AWAY_STARTED", deviceOffline
+                            ? "The sensor of seat " + seatCode + " went offline, so the seat is marked away. It will be "
+                              + "released at " + deadline + " unless the sensor sees you again."
+                            : "You left seat " + seatCode + ". It will be released at " + deadline + " unless you return.",
+                    data("seatCode", seatCode, "releaseAt", deadline, "reason", deviceOffline ? "DEVICE_OFFLINE" : "ABSENT"));
+            log.info("AWAY {} - release at {}{}", seatCode, deadline, deviceOffline ? " (device offline)" : "");
         });
     }
 

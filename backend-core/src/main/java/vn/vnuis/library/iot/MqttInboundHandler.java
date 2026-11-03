@@ -88,6 +88,8 @@ public class MqttInboundHandler {
             devices.onStatus(seat, true);
         } else if ("OFFLINE".equalsIgnoreCase(status)) {
             devices.onStatus(seat, false);
+            // A dead sensor must never freeze its seat in OCCUPIED: treat it as "nobody there".
+            stateMachine.onDeviceOffline(seat.seatCode());
         } else {
             log.warn("Unknown device status '{}' for {}", status, seat.seatCode());
         }

@@ -43,6 +43,8 @@ The client sets this Last Will when connecting (retained, QoS 1):
 { "deviceId": "ESP32-A01", "status": "OFFLINE" }
 ```
 
+When backend-core receives `OFFLINE` for a seat that is OCCUPIED, the seat goes AWAY at once (presence can no longer be observed), and is released after the away timeout unless the device reconnects and sees the student.
+
 ## Credentials / ACL (dev)
 
 Defined in `infra/emqx/auth-bootstrap.csv` and `infra/emqx/acl.conf`.

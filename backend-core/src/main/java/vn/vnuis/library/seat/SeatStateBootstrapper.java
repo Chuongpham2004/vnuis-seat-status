@@ -44,6 +44,7 @@ public class SeatStateBootstrapper {
     private final ReservationRepository reservations;
     private final IotDeviceRepository devices;
     private final ReconciliationJob reconciliation;
+    private final SeatStateMachine stateMachine;
     private final MqttPahoMessageDrivenChannelAdapter mqttAdapter;
     private final SeatProperties props;
     private final AtomicBoolean ready = new AtomicBoolean(false);
@@ -51,7 +52,8 @@ public class SeatStateBootstrapper {
     public SeatStateBootstrapper(SeatCatalog catalog, SeatStateStore store, SeatTimerService timers,
                                  SeatRepository seats, ReservationRepository reservations, IotDeviceRepository devices,
                                  ReconciliationJob reconciliation, MqttPahoMessageDrivenChannelAdapter mqttAdapter,
-                                 SeatProperties props) {
+                                 SeatProperties props, SeatStateMachine stateMachine) {
+        this.stateMachine = stateMachine;
         this.catalog = catalog;
         this.store = store;
         this.timers = timers;
@@ -68,10 +70,33 @@ public class SeatStateBootstrapper {
         int repaired = syncAll();
         log.info("Seat state hydrated into Redis for {} seats ({} DB rows repaired)", catalog.all().size(), repaired);
         reconciliation.runOnce(Duration.ZERO);
+        recoverSeatsWithOfflineDevices();
         ready.set(true);
         reconciliation.markReady();
         mqttAdapter.start();
         log.info("MQTT inbound adapter started");
+    }
+
+    /**
+     * OCCUPIED seats whose device is OFFLINE (e.g. it died while the backend was down) go AWAY, so the
+     * away timeout releases them. Retained OFFLINE Last Wills delivered right after the MQTT adapter
+     * starts are handled the same way; both paths are idempotent.
+     */
+    public void recoverSeatsWithOfflineDevices() {
+        int recovered = 0;
+        for (SeatState state : store.findAll(catalog.all().stream().map(SeatInfo::seatCode).toList()).values()) {
+            if (state.status() == SeatStatus.OCCUPIED && !state.deviceOnline()) {
+                try {
+                    stateMachine.onDeviceOffline(state.seatCode());
+                    recovered++;
+                } catch (RuntimeException e) {
+                    log.warn("Could not recover seat {} with an offline device: {}", state.seatCode(), e.toString());
+                }
+            }
+        }
+        if (recovered > 0) {
+            log.info("{} OCCUPIED seat(s) with an OFFLINE device moved to AWAY", recovered);
+        }
     }
 
     public boolean isReady() {

@@ -40,8 +40,18 @@ Auth: `Authorization: Bearer <accessToken>` from `POST /auth/login`. 🔓 = publ
 | Tool | Endpoint |
 |---|---|
 | `find_optimal_seats(zone_preference, is_quiet_zone, has_power_outlet, seat_type)` | GET `/ai-tools/optimal-seats?zonePreference=&isQuietZone=&hasPowerOutlet=&seatType=&limit=` |
-| `get_occupancy_forecast(zone_code, target_hour)` | GET `/ai-tools/occupancy?zoneCode=` (live + last 24 h). The forecast itself is served by ai-service (Phase 4). |
-| `reserve_seat_for_user(user_id, seat_code)` | POST `/ai-tools/reservations` `{"seatCode":"B-07"}` → books for the **token's** user with source `AI_CHATBOT`; the LLM's `user_id` is ignored. |
+| `get_occupancy_forecast(zone_code, target_hour)` | GET `/ai-tools/occupancy?zoneCode=` (live + last 24 h), combined with ai-service's own forecast. |
+| `reserve_seat(seat_code)` | POST `/ai-tools/reservations` `{"seatCode":"B-07"}` → books for the **token's** user with source `AI_CHATBOT`. |
+
+## AI (proxied to ai-service, same paths)
+| Method | Path | Notes |
+|---|---|---|
+| GET 🔓 | `/ai/forecast?zoneCode=A&hours=24` | `{zoneCode, model, rmse, cache:{hit,key,ttlSeconds}, points:[{time, hour, predictedRate, predictedPercent, lower, upper, level}]}` |
+| GET 🔓 | `/ai/metrics` | `{models:{baseline_moving_average, lightgbm}:{mae,rmse,mape,r2}, perZone, improvementPct, featureImportance, testPeriod}` |
+| POST | `/ai/chat` `{"message":"...","sessionId":"..."}` | `{sessionId, reply, language, engine, intent, toolCalls:[{name, arguments, ok, result|error}], suggestedSeats, reservation}` |
+| POST 🛡 | `/ai/admin/synthetic` `{"days":180}`, `/ai/admin/train` | seed history / retrain |
+
+503 `AI_SERVICE_UNAVAILABLE` when ai-service is down.
 
 ## Admin 🛡
 | Method | Path | Notes |

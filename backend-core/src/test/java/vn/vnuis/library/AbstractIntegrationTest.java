@@ -58,8 +58,31 @@ public abstract class AbstractIntegrationTest {
             .waitingFor(Wait.forLogMessage(".*mosquitto version .* running.*", 1))
             .withStartupTimeout(Duration.ofMinutes(2));
 
+    /** Stand-in for ai-service: echoes what the /api/v1/ai/** proxy forwarded. */
+    static final com.sun.net.httpserver.HttpServer FAKE_AI;
+
     static {
         Startables.deepStart(POSTGRES, REDIS, MQTT).join();
+        try {
+            FAKE_AI = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("127.0.0.1", 0), 0);
+        } catch (java.io.IOException e) {
+            throw new IllegalStateException(e);
+        }
+        FAKE_AI.createContext("/", exchange -> {
+            String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+            String auth = exchange.getRequestHeaders().getFirst("Authorization");
+            String json = "{\"method\":\"" + exchange.getRequestMethod() + "\",\"path\":\""
+                    + exchange.getRequestURI().getPath() + "\",\"query\":\"" + exchange.getRequestURI().getRawQuery()
+                    + "\",\"authForwarded\":" + (auth != null && auth.startsWith("Bearer "))
+                    + ",\"bodyLength\":" + body.length() + "}";
+            int status = body.contains("please-conflict") ? 409 : 200;
+            byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(status, bytes.length);
+            exchange.getResponseBody().write(bytes);
+            exchange.close();
+        });
+        FAKE_AI.start();
     }
 
     private static MqttClient publisher;
@@ -73,6 +96,7 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
         registry.add("app.mqtt.url", AbstractIntegrationTest::mqttUrl);
         registry.add("app.mqtt.username", () -> "");
+        registry.add("app.ai.base-url", () -> "http://127.0.0.1:" + FAKE_AI.getAddress().getPort());
     }
 
     static String mqttUrl() {

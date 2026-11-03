@@ -121,13 +121,27 @@ services:
     profiles: ["app"]
     environment:
       DB_URL: postgresql+psycopg://ai_reader:${AI_DB_PASSWORD:-ai_reader_dev_pw}@postgres:5432/${POSTGRES_DB:-library}
+      REDIS_URL: redis://redis:6379/0
       BACKEND_URL: http://backend-core:8080
+      JWT_SECRET: ${JWT_SECRET:-change-me-dev-only-secret-at-least-32-bytes-long}
+      AUTO_BOOTSTRAP: "true"   # first start: seed 180 days of synthetic history + train
+      # Chat engine: deterministic unless one of these is set (LLM_PROVIDER=auto picks the first)
+      LLM_PROVIDER: ${LLM_PROVIDER:-auto}
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen2.5:7b}
     ports:
       - "${AI_PORT:-8000}:8000"
+    volumes:
+      - ai-models:/app/models
     depends_on:
       postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
 
   iot-simulator:
     build: ../iot-simulator
@@ -158,3 +172,4 @@ volumes:
   pg-data:
   redis-data:
   emqx-data:
+  ai-models:

@@ -42,6 +42,9 @@ public class SecurityConfig {
                         // The live seat map is public (e.g. a lobby display board)
                         .requestMatchers(HttpMethod.GET, "/api/v1/zones", "/api/v1/seats", "/api/v1/seats/*").permitAll()
                         .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
+                        // ai-service proxy: forecasts and model metrics are public, chat needs a student token
+                        .requestMatchers(HttpMethod.GET, "/api/v1/ai/forecast", "/api/v1/ai/metrics").permitAll()
+                        .requestMatchers("/api/v1/ai/admin/**").hasRole("ADMIN")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(e -> e

@@ -70,12 +70,15 @@ app:
   redis:
     # Value applied with CONFIG SET only if the server has notifications switched off.
     keyspace-notifications: Ex
+  ai:
+    base-url: ${AI_SERVICE_URL:http://localhost:8000}   # proxied under /api/v1/ai/**
+    read-timeout-seconds: 120
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://127.0.0.1:5173}
   stats:
     zone-id: Asia/Ho_Chi_Minh
     # Inclusive date ranges, e.g. 2026-12-14/2027-01-10
-    exam-periods: ${EXAM_PERIODS:2026-12-14/2027-01-10}
+    exam-periods: ${EXAM_PERIODS:2026-05-25/2026-06-14,2026-10-19/2026-10-30,2026-12-14/2027-01-10}
 
 logging:
   level:

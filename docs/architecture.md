@@ -45,6 +45,7 @@ stateDiagram-v2
     RESERVED --> OCCUPIED: dual check-in (QR + sensor)
     RESERVED --> AVAILABLE: no-show timer (-10 credit) / cancel
     OCCUPIED --> AWAY: no presence for 1 min - 30 min timer
+    OCCUPIED --> AWAY: sensor OFFLINE (Last Will) - immediately
     AWAY --> OCCUPIED: presence returns
     AWAY --> AVAILABLE: away timer expires (auto release)
     OCCUPIED --> AVAILABLE: check-out (+2 credit if on time)
@@ -62,5 +63,7 @@ stateDiagram-v2
 | `timer:seat:walkin:{seat_code}` | string | 120 s | presence must hold this long to become a walk-in |
 | `timer:seat:awaypending:{seat_code}` | string | 60 s | absence must hold this long to become AWAY |
 | `cache:forecast:zone:{zone_code}:{YYYY-MM-DD}` | JSON string | 3600 s | forecast cache |
+
+A seat whose sensor goes OFFLINE is treated as empty: OCCUPIED moves to AWAY immediately, and the away timer releases it unless the device comes back and detects the student. The same check runs at startup for devices that died while the backend was down.
 
 Redis expiry events are best-effort (they can fire late and are lost while the backend is down), so a reconciliation job in backend-core re-checks deadlines from PostgreSQL every 30 s.

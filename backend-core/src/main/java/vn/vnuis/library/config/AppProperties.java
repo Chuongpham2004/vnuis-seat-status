@@ -30,6 +30,11 @@ public final class AppProperties {
     public record Redis(@DefaultValue("Ex") String keyspaceNotifications) {
     }
 
+    @ConfigurationProperties("app.ai")
+    public record Ai(@DefaultValue("http://localhost:8000") String baseUrl,
+                     @DefaultValue("120") long readTimeoutSeconds) {
+    }
+
     @ConfigurationProperties("app.cors")
     public record Cors(@DefaultValue("http://localhost:5173") List<String> allowedOrigins) {
     }

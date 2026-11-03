@@ -12,7 +12,7 @@ Graduation capstone: real-time library seat monitoring (ESP32 + HC-SR04 and a mu
 | `backend-core/` | Spring Boot 3 / Java 21 — seat state machine, booking, MQTT, WebSocket. Flyway migrations live in `src/main/resources/db/migration` | ✅ Phase 2 |
 | `iot-edge/` | ESP32 + HC-SR04 firmware (PlatformIO) for seat A-01: see [iot-edge/README.md](iot-edge/README.md) | ✅ Phase 3 |
 | `iot-simulator/` | 59 virtual seats over MQTT, ambient waves + demo CLI/HTTP control: see [iot-simulator/README.md](iot-simulator/README.md) | ✅ Phase 3 |
-| `ai-service/` | FastAPI — XGBoost forecast + Claude tool-calling agent | ⏳ Phase 4 |
+| `ai-service/` | FastAPI: synthetic history, LightGBM vs. moving-average forecast (MAE/RMSE/MAPE/R²), tool-calling assistant (Claude/OpenAI/Gemini/Ollama or the built-in deterministic engine): see [ai-service/README.md](ai-service/README.md) | ✅ Phase 4 |
 | `frontend-web/` | React (Vite) + Tailwind — student map, admin dashboard (currently the earlier Firebase prototype) | ⏳ Phase 5 |
 | `docs/` | Architecture, MQTT contract, REST/WebSocket API | |
 
