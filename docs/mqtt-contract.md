@@ -1,6 +1,6 @@
 # MQTT Contract
 
-Broker: EMQX 5 — `tcp://<host>:1883` (WebSocket `ws://<host>:8083/mqtt`). QoS 1 everywhere.
+Broker: EMQX 5 — `tcp://<host>:1883` (WebSocket `ws://<host>:8083/mqtt`). QoS 1, except ESP32 publishes (PubSubClient only supports QoS 0 publishing; its Last Will is still QoS 1). Missing a heartbeat is harmless: the next one arrives within 30 s.
 
 ## Topics
 
@@ -29,7 +29,8 @@ Seat codes contain a hyphen (`A-01`); zone codes are single letters (`A`, `B`, `
   "ts": 1762156800000
 }
 ```
-- `distanceCm` — moving-average distance (cm); `-1` when the echo timed out.
+- `distanceCm`: moving-average distance in cm. A missing echo counts as max range (400 cm). The simulator sends a realistic random distance (20-45 cm seated, 90-220 cm empty).
+- `uptimeMs` (ESP32 only): milliseconds since boot.
 - `objectDetected` — **debounced** presence: it only flips after the filtered distance has stayed on the other side of `threshold_cm` (default 50 cm) for 5 s.
 - `ts` — epoch milliseconds (device clock via NTP; backend uses its own receive time if `ts` is missing or skewed > 60 s).
 
