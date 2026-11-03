@@ -1,0 +1,5 @@
+user_id,password,is_superuser
+backend,backend_dev_pw,false
+simulator,simulator_dev_pw,false
+esp32-a01,esp32_dev_pw,false
+monitor,monitor_dev_pw,false

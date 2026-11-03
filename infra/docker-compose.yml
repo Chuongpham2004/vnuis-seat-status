@@ -1,0 +1,160 @@
+# Smart Self-Study Space platform - local stack
+#
+#   Infra only:   docker compose -f infra/docker-compose.yml up -d
+#   Migrate DB:   docker compose -f infra/docker-compose.yml --profile migrate run --rm flyway migrate
+#   Full stack:   docker compose -f infra/docker-compose.yml --profile app up -d --build   (Phase 2+)
+#
+# Every value has a dev default; copy .env.example to .env to override.
+name: smart-library
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lib-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-library}
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app_dev_pw}
+      AI_DB_PASSWORD: ${AI_DB_PASSWORD:-ai_reader_dev_pw}
+      TZ: Asia/Ho_Chi_Minh
+      PGTZ: Asia/Ho_Chi_Minh
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: lib-redis
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  emqx:
+    image: emqx/emqx:5.8.6
+    container_name: lib-emqx
+    environment:
+      EMQX_NODE__NAME: emqx@127.0.0.1
+      EMQX_DASHBOARD__DEFAULT_USERNAME: ${EMQX_DASHBOARD_USER:-admin}
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD:-library_admin}
+      # Username/password auth backed by EMQX's built-in DB, pre-filled from a CSV.
+      EMQX_AUTHENTICATION__1__MECHANISM: password_based
+      EMQX_AUTHENTICATION__1__BACKEND: built_in_database
+      EMQX_AUTHENTICATION__1__USER_ID_TYPE: username
+      EMQX_AUTHENTICATION__1__BOOTSTRAP_FILE: /opt/emqx/etc/auth-bootstrap.csv
+      EMQX_AUTHENTICATION__1__BOOTSTRAP_TYPE: plain
+      # Topic ACL lives in etc/acl.conf (EMQX's default file source).
+      EMQX_AUTHORIZATION__NO_MATCH: deny
+    ports:
+      - "${MQTT_PORT:-1883}:1883"        # MQTT (ESP32, simulator, backend)
+      - "${MQTT_WS_PORT:-8083}:8083"     # MQTT over WebSocket
+      - "${EMQX_DASHBOARD_PORT:-18083}:18083"  # Dashboard
+    volumes:
+      - ./emqx/acl.conf:/opt/emqx/etc/acl.conf:ro
+      - ./emqx/auth-bootstrap.csv:/opt/emqx/etc/auth-bootstrap.csv:ro
+      - emqx-data:/opt/emqx/data
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  # One-shot migration runner (same SQL files Spring Boot's Flyway uses).
+  flyway:
+    image: flyway/flyway:11-alpine
+    profiles: ["migrate"]
+    command: ["migrate"]
+    environment:
+      FLYWAY_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-library}
+      FLYWAY_USER: ${POSTGRES_USER:-app}
+      FLYWAY_PASSWORD: ${POSTGRES_PASSWORD:-app_dev_pw}
+      FLYWAY_LOCATIONS: filesystem:/flyway/sql
+    volumes:
+      - ../backend-core/src/main/resources/db/migration:/flyway/sql:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # ---------------------------------------------------------------
+  # Application services (built in later phases; start with --profile app)
+  # ---------------------------------------------------------------
+  backend-core:
+    build: ../backend-core
+    container_name: lib-backend
+    profiles: ["app"]
+    environment:
+      SPRING_PROFILES_ACTIVE: docker${DEMO_PROFILE:-}
+      DB_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB:-library}
+      DB_USER: ${POSTGRES_USER:-app}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-app_dev_pw}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MQTT_URL: tcp://emqx:1883
+      MQTT_USER: backend
+      MQTT_PASSWORD: ${MQTT_BACKEND_PASSWORD:-backend_dev_pw}
+      JWT_SECRET: ${JWT_SECRET:-change-me-dev-only-secret-at-least-32-bytes-long}
+      AI_SERVICE_URL: http://ai-service:8000
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      emqx: { condition: service_healthy }
+
+  ai-service:
+    build: ../ai-service
+    container_name: lib-ai
+    profiles: ["app"]
+    environment:
+      DB_URL: postgresql+psycopg://ai_reader:${AI_DB_PASSWORD:-ai_reader_dev_pw}@postgres:5432/${POSTGRES_DB:-library}
+      BACKEND_URL: http://backend-core:8080
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-claude-sonnet-5-5}
+    ports:
+      - "${AI_PORT:-8000}:8000"
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  iot-simulator:
+    build: ../iot-simulator
+    container_name: lib-simulator
+    profiles: ["app"]
+    environment:
+      MQTT_HOST: emqx
+      MQTT_PORT: 1883
+      MQTT_USER: simulator
+      MQTT_PASSWORD: ${MQTT_SIMULATOR_PASSWORD:-simulator_dev_pw}
+      BACKEND_URL: http://backend-core:8080
+      SIM_SEATS: ${SIM_SEATS:-59}
+    ports:
+      - "${SIMULATOR_PORT:-8090}:8090"
+    depends_on:
+      emqx: { condition: service_healthy }
+
+  frontend-web:
+    build: ../frontend-web
+    container_name: lib-frontend
+    profiles: ["app"]
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend-core
+
+volumes:
+  pg-data:
+  redis-data:
+  emqx-data:
