@@ -62,7 +62,7 @@ export default function Recommendations({ filters, zone, onPick }) {
                 <span className="font-semibold">
                   {i + 1}. {r.seat.seatCode}
                 </span>
-                <span className="text-xs secondary block">{r.reasons.map(translateReason).join(' · ')}</span>
+                <span className="text-xs secondary block">{r.reasons.map(translateReason).join(', ')}</span>
               </button>
             </li>
           ))}

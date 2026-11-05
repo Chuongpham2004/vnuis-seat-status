@@ -139,7 +139,7 @@ export default function AdminDevices() {
       <div>
         <h1 className="text-2xl font-bold">Thiết bị IoT</h1>
         <p className="secondary text-sm">
-          {onlineCount}/{devices.length} cảm biến online · trạng thái cập nhật trực tiếp qua Last Will (MQTT)
+          {onlineCount}/{devices.length} cảm biến đang hoạt động. Trạng thái cập nhật trực tiếp qua Last Will (MQTT)
         </p>
       </div>
 

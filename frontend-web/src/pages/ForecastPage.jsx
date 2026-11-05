@@ -140,7 +140,7 @@ export default function ForecastPage() {
             />
             {data?.[0] && (
               <p className="text-xs muted">
-                Mô hình: {data[0].model} · cache {data[0].cache?.hit ? 'hit' : 'miss'}
+                Mô hình {data[0].model}, bộ nhớ đệm {data[0].cache?.hit ? 'trúng' : 'trượt'}
               </p>
             )}
           </section>

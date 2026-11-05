@@ -51,12 +51,12 @@ describe('MapPage', () => {
   it('renders the live map for an anonymous visitor', async () => {
     renderPage()
     expect(await screen.findByRole('heading', { name: 'Khu A - Tự học yên tĩnh' })).toBeInTheDocument()
-    expect(screen.getByText(/1\/3 chỗ đang trống/)).toBeInTheDocument()
+    expect(screen.getByText(/1 trên 3 chỗ đang trống/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /A-03: Tạm vắng, cảm biến mất kết nối/ })).toHaveClass('offline')
 
     await userEvent.click(screen.getByRole('button', { name: /^Ghế A-01/ }))
     const panel = screen.getByRole('region', { name: 'Chi tiết ghế A-01' })
-    expect(within(panel).getByText('ESP32 thật · online')).toBeInTheDocument()
+    expect(within(panel).getByText('ESP32 thật, đang hoạt động')).toBeInTheDocument()
     expect(within(panel).getByRole('link', { name: 'Đăng nhập để đặt ghế' })).toBeInTheDocument()
   })
 

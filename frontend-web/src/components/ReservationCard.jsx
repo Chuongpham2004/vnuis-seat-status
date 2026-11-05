@@ -8,6 +8,8 @@ import { BOOKING_SOURCE, RESERVATION_STATUS, seatStatusMeta } from '../lib/seatS
 import QrScanner, { qrScanSupported } from './QrScanner'
 import { useToast } from './Toasts'
 
+const lowerFirst = (s) => (s ? s[0].toLowerCase() + s.slice(1) : s)
+
 /**
  * The student's open reservation: countdown to the no-show deadline, dual check-in
  * (QR on the table + sensor presence), check-out and cancel.
@@ -59,35 +61,36 @@ export default function ReservationCard({ reservation, seat, onChange }) {
   const urgent = secondsLeft != null && secondsLeft <= 60
 
   return (
-    <section className="card p-5 space-y-4" aria-label="Lượt đặt chỗ hiện tại">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="label">Ghế của bạn</p>
-          <p className="text-3xl font-bold">{reservation.seatCode}</p>
-          <p className="text-sm secondary">
-            Khu {reservation.zoneCode} · đặt qua {BOOKING_SOURCE[reservation.bookingSource] || reservation.bookingSource}{' '}
-            lúc {formatTime(reservation.reservedAt)}
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
+    <section
+      className="card p-5 space-y-4 border-l-4"
+      style={{ borderLeftColor: 'var(--brass)' }}
+      aria-label="Lượt đặt chỗ hiện tại"
+    >
+      <div>
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm secondary">Ghế của bạn ★</p>
           <span className={'chip tone-' + meta.tone}>
             <span className="dot" />
             {meta.label}
           </span>
-          {seatMeta && (
-            <span className="text-xs secondary">
-              Ghế: {seatMeta.icon} {seatMeta.label}
-              {seat && !seat.deviceOnline && ' · cảm biến mất kết nối'}
-            </span>
-          )}
         </div>
+        <p className="text-4xl font-extrabold tracking-tight mt-1">{reservation.seatCode}</p>
+        <p className="text-sm secondary mt-1">
+          Đặt qua {lowerFirst(BOOKING_SOURCE[reservation.bookingSource] || reservation.bookingSource)} lúc{' '}
+          {formatTime(reservation.reservedAt)}.
+          {seatMeta && ` Ghế đang ở trạng thái ${seatMeta.label.toLowerCase()}`}
+          {seat && !seat.deviceOnline ? ', cảm biến mất kết nối.' : seatMeta ? '.' : ''}
+        </p>
       </div>
 
       {reservation.status === 'PENDING' && (
         <>
-          <div className={'rounded-lg p-4 ' + (urgent ? 'bg-[#fdecec]' : 'bg-[var(--surface-2)]')}>
-            <p className="label">Thời gian còn lại để check-in</p>
-            <p className="text-4xl font-bold tabular-nums" aria-live="polite">
+          <div
+            className="rounded-[var(--radius-md)] p-4"
+            style={{ background: urgent ? 'color-mix(in srgb, var(--critical) 12%, var(--surface-1))' : 'var(--surface-2)' }}
+          >
+            <p className="text-sm secondary">Còn lại để check-in</p>
+            <p className="text-5xl font-extrabold tabular-nums tracking-tight" aria-live="polite">
               {formatCountdown(secondsLeft)}
             </p>
             <p className="text-xs secondary mt-1">

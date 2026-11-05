@@ -1,23 +1,29 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   Design tokens. Chart roles follow the dataviz reference palette:
-   categorical slots 1-3 = zones A/B/C (validated all-pairs on the light
-   surface), status palette = seat states (always paired with icon + label).
+   Design direction: library wayfinding signs + an architectural floor plan.
+   Paper walls, navy signage ink, plan hairlines; brass only marks "your seat".
+   Seat states keep the validated status palette (always icon + label too);
+   zones A/B/C keep categorical slots 1-3 for charts.
    ------------------------------------------------------------------ */
 :root {
   color-scheme: light;
-  --page: #f6f6f3;
-  --surface-1: #fcfcfb;
-  --surface-2: #f0efec;
-  --ink-primary: #0b0b0b;
-  --ink-secondary: #52514e;
-  --ink-muted: #898781;
-  --grid: #e1e0d9;
-  --axis: #c3c2b7;
-  --border: rgba(11, 11, 11, 0.1);
-  --accent: #2a78d6;
-  --accent-strong: #1c5cab;
+  --paper: #f2f4f3;
+  --surface-1: #fbfcfb;
+  --surface-2: #e8ecea;
+  --ink-primary: #16213a;
+  --ink-secondary: #4a5468;
+  --ink-muted: #7d8696;
+  --plan-line: #c5cecb;
+  --grid: #dde3e1;
+  --axis: #b9c2bf;
+  --border: rgba(22, 33, 58, 0.12);
+  --sign: #1e2d4d;
+  --sign-ink: #f2f4f3;
+  --accent: #1e2d4d;
+  --accent-strong: #0f1a33;
+  --brass: #a87a1f;
+  --focus: #2a78d6;
 
   --series-1: #2a78d6;
   --series-2: #eb6834;
@@ -31,10 +37,14 @@
 
   --seq-100: #cde2fb;
   --seq-700: #0d366b;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 18px;
 }
 
 @theme {
-  --font-sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-sans: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 html,
@@ -45,298 +55,480 @@ body,
 
 body {
   margin: 0;
-  background: var(--page);
+  background: var(--paper);
   color: var(--ink-primary);
   font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- generic building blocks ---------- */
-.card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 12px;
+h1,
+h2,
+h3 {
+  letter-spacing: -0.01em;
+  line-height: 1.2;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.375rem;
-  border-radius: 8px;
-  padding: 0.5rem 0.875rem;
-  font-size: 0.875rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--ink-primary);
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s;
-}
-.btn:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-.btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.btn-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
-}
-.btn-primary:hover:not(:disabled) {
-  background: var(--accent-strong);
-}
-.btn-danger {
-  color: var(--critical);
-}
-.btn-sm {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem;
-}
-
-.input {
-  width: 100%;
-  border: 1px solid var(--axis);
-  border-radius: 8px;
-  padding: 0.5rem 0.75rem;
-  background: #fff;
-  font-size: 0.875rem;
-}
-.input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: -1px;
-}
-
-.label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink-secondary);
-}
-
-.muted {
-  color: var(--ink-muted);
-}
-.secondary {
-  color: var(--ink-secondary);
-}
-
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.25rem;
-  border-radius: 999px;
-  padding: 0.125rem 0.5rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--ink-secondary);
-  white-space: nowrap;
-}
-
-.dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  flex: none;
-}
-
-.tone-good .dot,
-.dot.tone-good {
-  background: var(--good);
-}
-.tone-warning .dot,
-.dot.tone-warning {
-  background: var(--warning);
-}
-.tone-serious .dot,
-.dot.tone-serious {
-  background: var(--serious);
-}
-.tone-critical .dot,
-.dot.tone-critical {
-  background: var(--critical);
-}
-.tone-neutral .dot,
-.dot.tone-neutral {
-  background: var(--ink-muted);
-}
-
-table.data {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-}
-table.data th {
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--ink-secondary);
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--axis);
-}
-table.data td {
-  padding: 0.5rem 0.75rem;
-  border-bottom: 1px solid var(--grid);
-  font-variant-numeric: tabular-nums;
-}
-
-/* ---------- seat states (status palette + icon + label) ---------- */
-.seat {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  min-height: 64px;
-  border-radius: 10px;
-  border: 2px solid transparent;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s;
-  color: #fff;
-}
-.seat:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-}
-.seat:focus-visible {
-  outline: 3px solid var(--ink-primary);
+:focus-visible {
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-.seat.selected {
-  outline: 3px solid var(--ink-primary);
-  outline-offset: 2px;
-}
-.seat.dimmed {
-  opacity: 0.3;
-}
-.seat .seat-code {
-  font-size: 0.875rem;
-  font-weight: 700;
-}
-.seat .seat-icons {
-  position: absolute;
-  top: 3px;
-  right: 5px;
-  font-size: 0.65rem;
-}
 
-.status-available {
-  background: var(--good);
-}
-.status-reserved {
-  background: var(--warning);
-  color: var(--ink-primary);
-}
-.status-occupied {
-  background: var(--critical);
-}
-.status-away {
-  background: var(--serious);
-  color: var(--ink-primary);
-}
-/* A dead sensor: the state is not trustworthy, so stripe it (texture, not colour alone). */
-.seat.offline {
-  background-image: repeating-linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.45) 0 4px,
-    transparent 4px 9px
-  );
-  border-color: var(--ink-secondary);
-  border-style: dashed;
-}
-
-.swatch {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 3px;
-  flex: none;
-}
-.swatch-offline {
-  background: var(--surface-2)
-    repeating-linear-gradient(135deg, var(--ink-muted) 0 2px, transparent 2px 5px);
-  border: 1px dashed var(--ink-secondary);
-}
-
-/* ---------- toasts ---------- */
-.toast-stack {
-  position: fixed;
-  right: 1rem;
-  bottom: 1rem;
-  z-index: 50;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  width: min(380px, calc(100vw - 2rem));
-}
-.toast {
-  display: flex;
-  gap: 0.75rem;
-  align-items: flex-start;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-  border-radius: 10px;
-  padding: 0.75rem 0.875rem;
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-  animation: toast-in 0.2s ease-out;
-}
-.toast-good {
-  border-left-color: var(--good);
-}
-.toast-warning {
-  border-left-color: var(--warning);
-}
-.toast-critical {
-  border-left-color: var(--critical);
-}
-.toast-close {
-  margin-left: auto;
-  border: none;
-  background: none;
-  font-size: 1.25rem;
-  line-height: 1;
-  cursor: pointer;
-  color: var(--ink-muted);
-}
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+@layer components {
+  /* Panels are flat: a hairline, no shadow. Hierarchy comes from spacing and type. */
+  .card {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
   }
-}
 
-/* ---------- charts ---------- */
-.chart-tooltip {
-  position: absolute;
-  pointer-events: none;
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.5rem 0.625rem;
-  font-size: 0.75rem;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
-  white-space: nowrap;
-  z-index: 10;
-}
-.chart-tooltip .value {
-  font-weight: 700;
-  color: var(--ink-primary);
-  font-variant-numeric: tabular-nums;
-}
-.line-key {
-  display: inline-block;
-  width: 12px;
-  height: 2px;
-  border-radius: 2px;
-  vertical-align: middle;
+  .page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.95rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid var(--axis);
+    background: var(--surface-1);
+    color: var(--ink-primary);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    text-decoration: none;
+  }
+  .btn:hover:not(:disabled) {
+    background: var(--surface-2);
+  }
+  .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--accent-strong);
+  }
+  .btn-danger {
+    color: var(--critical);
+    border-color: color-mix(in srgb, var(--critical) 45%, transparent);
+  }
+  .btn-sm {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
+
+  .input {
+    width: 100%;
+    border: 1px solid var(--axis);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.75rem;
+    background: var(--surface-1);
+    color: var(--ink-primary);
+    font: inherit;
+    font-size: 0.875rem;
+  }
+  .input:focus {
+    outline: 2px solid var(--focus);
+    outline-offset: -1px;
+  }
+
+  .label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-secondary);
+  }
+
+  .muted {
+    color: var(--ink-muted);
+  }
+  .secondary {
+    color: var(--ink-secondary);
+  }
+
+  /* Toggle filter: a pressed state that reads as a switched-on sign, not a coloured pill. */
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    border: 1px solid var(--axis);
+    background: transparent;
+    color: var(--ink-secondary);
+    white-space: nowrap;
+  }
+  .chip-on {
+    background: var(--sign);
+    border-color: var(--sign);
+    color: var(--sign-ink);
+  }
+
+  .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    flex: none;
+  }
+  .tone-good .dot,
+  .dot.tone-good {
+    background: var(--good);
+  }
+  .tone-warning .dot,
+  .dot.tone-warning {
+    background: var(--warning);
+  }
+  .tone-serious .dot,
+  .dot.tone-serious {
+    background: var(--serious);
+  }
+  .tone-critical .dot,
+  .dot.tone-critical {
+    background: var(--critical);
+  }
+  .tone-neutral .dot,
+  .dot.tone-neutral {
+    background: var(--ink-muted);
+  }
+
+  table.data {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  table.data th {
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--ink-secondary);
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--axis);
+  }
+  table.data td {
+    padding: 0.6rem 0.9rem;
+    border-bottom: 1px solid var(--grid);
+    font-variant-numeric: tabular-nums;
+  }
+  table.data tbody tr:hover {
+    background: color-mix(in srgb, var(--surface-2) 55%, transparent);
+  }
+
+  /* ---------- floor plan ---------- */
+  .plan {
+    background-color: var(--surface-1);
+    background-image: linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+  }
+  /* A room: double wall line with a door gap on the top edge. */
+  .room {
+    position: relative;
+    background: var(--surface-1);
+    border: 3px double var(--ink-secondary);
+    border-radius: 4px;
+  }
+  .room-door {
+    position: absolute;
+    top: -3px;
+    left: 28px;
+    width: 40px;
+    height: 3px;
+    background: var(--surface-1);
+  }
+  .room-tag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: var(--radius-sm);
+    background: var(--sign);
+    color: var(--sign-ink);
+    font-weight: 800;
+    font-size: 1.25rem;
+  }
+
+  /* Wayfinding sign in the directory rail */
+  .sign {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.25rem 1rem;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    padding: 0.9rem 1rem;
+    border-radius: var(--radius-md);
+    background: var(--sign);
+    color: var(--sign-ink);
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+  @media (max-width: 1023px) {
+    .sign {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+      padding: 0.6rem 0.75rem;
+    }
+    .sign-letter {
+      grid-row: auto;
+    }
+  }
+  .sign:hover {
+    background: #26385e;
+  }
+  .sign[aria-pressed="true"] {
+    border-color: var(--brass);
+  }
+  .sign-letter {
+    grid-row: span 2;
+    font-size: clamp(2.25rem, 9vw, 3.25rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+  }
+  .sign-sub {
+    font-size: 0.8rem;
+    color: color-mix(in srgb, var(--sign-ink) 72%, transparent);
+  }
+
+  /* ---------- seats (status palette + glyph + label) ---------- */
+  .seat {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 1.35;
+    min-height: 44px;
+    border-radius: var(--radius-sm);
+    border: 0;
+    font-weight: 700;
+    cursor: pointer;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+  }
+  .seat-group {
+    border-radius: 14px;
+  }
+  .seat:hover {
+    filter: brightness(1.06);
+  }
+  .seat.selected {
+    outline: 3px solid var(--ink-primary);
+    outline-offset: 2px;
+  }
+  .seat.mine {
+    box-shadow: 0 0 0 3px var(--surface-1), 0 0 0 6px var(--brass);
+  }
+  .seat.dimmed {
+    opacity: 0.22;
+  }
+  .seat .seat-num {
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+  .seat .seat-glyph {
+    font-size: 0.7rem;
+    line-height: 1;
+    margin-top: 3px;
+    opacity: 0.9;
+  }
+  .seat .seat-icons {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: 0.6rem;
+    line-height: 1;
+  }
+  /* A real-time change gets one short pulse: it answers an actual event in the room. */
+  .seat-ping {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    animation: seat-pulse 0.9s ease-out forwards;
+  }
+  @keyframes seat-pulse {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--ink-primary) 45%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 12px transparent;
+    }
+  }
+
+  /* Free seats are what students look for, so only they are solid. Taken seats are a
+     pale tint of their status colour with a status bar on the left. */
+  .status-available {
+    background: var(--good);
+  }
+  .status-reserved,
+  .status-occupied,
+  .status-away {
+    color: var(--ink-primary);
+    border-left: 5px solid var(--status-c);
+    background: color-mix(in srgb, var(--status-c) 16%, var(--surface-1));
+  }
+  .status-reserved {
+    --status-c: var(--warning);
+  }
+  .status-occupied {
+    --status-c: var(--critical);
+  }
+  .status-away {
+    --status-c: var(--serious);
+  }
+  .swatch.status-reserved,
+  .swatch.status-occupied,
+  .swatch.status-away {
+    border-left-width: 4px;
+  }
+  /* A dead sensor: the state is not trustworthy, so stripe it (texture, not colour alone). */
+  .seat.offline {
+    background-image: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0 4px, transparent 4px 9px);
+    outline: 2px dashed var(--ink-secondary);
+    outline-offset: -2px;
+  }
+
+  .swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: none;
+  }
+  .swatch-offline {
+    background: var(--surface-2) repeating-linear-gradient(135deg, var(--ink-muted) 0 2px, transparent 2px 5px);
+    border: 1px dashed var(--ink-secondary);
+  }
+
+  /* ---------- seat drawer (side sheet on desktop, bottom sheet on mobile) ---------- */
+  .drawer {
+    position: fixed;
+    z-index: 40;
+    background: var(--surface-1);
+    box-shadow: 0 18px 50px rgba(22, 33, 58, 0.22);
+    overflow-y: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    max-height: 78vh;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    animation: drawer-up 0.22s ease-out;
+  }
+  @media (min-width: 1024px) {
+    .drawer {
+      left: auto;
+      top: 72px;
+      right: 16px;
+      bottom: auto;
+      width: 360px;
+      max-height: calc(100vh - 88px);
+      border-radius: var(--radius-lg);
+      animation-name: drawer-in;
+    }
+  }
+  @keyframes drawer-up {
+    from {
+      transform: translateY(24px);
+      opacity: 0;
+    }
+  }
+  @keyframes drawer-in {
+    from {
+      transform: translateX(24px);
+      opacity: 0;
+    }
+  }
+
+  /* ---------- toasts ---------- */
+  .toast-stack {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: min(380px, calc(100vw - 2rem));
+  }
+  .toast {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+    background: var(--sign);
+    color: var(--sign-ink);
+    border-left: 4px solid var(--sign-ink);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 0.875rem;
+    box-shadow: 0 10px 28px rgba(22, 33, 58, 0.25);
+    animation: drawer-up 0.2s ease-out;
+  }
+  .toast .text-sm {
+    color: color-mix(in srgb, var(--sign-ink) 75%, transparent) !important;
+  }
+  .toast-good {
+    border-left-color: var(--good);
+  }
+  .toast-warning {
+    border-left-color: var(--warning);
+  }
+  .toast-critical {
+    border-left-color: var(--critical);
+  }
+  .toast-close {
+    margin-left: auto;
+    border: none;
+    background: none;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+  }
+
+  /* ---------- charts ---------- */
+  .chart-tooltip {
+    position: absolute;
+    pointer-events: none;
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.625rem;
+    font-size: 0.75rem;
+    box-shadow: 0 6px 18px rgba(22, 33, 58, 0.14);
+    white-space: nowrap;
+    z-index: 10;
+  }
+  .chart-tooltip .value {
+    font-weight: 700;
+    color: var(--ink-primary);
+    font-variant-numeric: tabular-nums;
+  }
+  .line-key {
+    display: inline-block;
+    width: 12px;
+    height: 2px;
+    border-radius: 2px;
+    vertical-align: middle;
+  }
 }
 
 /* ---------- print (QR sticker sheet) ---------- */

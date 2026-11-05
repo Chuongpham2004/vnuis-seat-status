@@ -69,7 +69,7 @@ export default function AdminDashboard() {
         <StatTile label="Cảm biến offline" value={offline} note={offline ? 'Ghế có cảm biến offline được coi là trống' : 'Tất cả cảm biến hoạt động'} />
       </div>
 
-      <StatusLegend counts={counts} />
+      <StatusLegend counts={counts} showMine={false} />
 
       <div className="grid md:grid-cols-3 gap-3">
         {zones.map((z) => (
@@ -77,7 +77,7 @@ export default function AdminDashboard() {
             <p className="font-semibold">{z.name}</p>
             <ZoneBar zone={z} height={12} />
             <p className="text-sm secondary">
-              Trống {z.available} · Đặt {z.reserved} · Có người {z.occupied} · Vắng {z.away}
+              {z.available} trống, {z.reserved} đã đặt, {z.occupied} có người, {z.away} tạm vắng
             </p>
           </div>
         ))}

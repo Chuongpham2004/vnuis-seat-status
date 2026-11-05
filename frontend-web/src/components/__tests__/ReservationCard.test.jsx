@@ -31,7 +31,7 @@ describe('ReservationCard', () => {
   it('shows the countdown for a pending booking', () => {
     renderCard({ reservation: pending })
     expect(screen.getByText('B-07')).toBeInTheDocument()
-    expect(screen.getByText(/Trợ lý AI/)).toBeInTheDocument()
+    expect(screen.getByText(/Đặt qua trợ lý AI/)).toBeInTheDocument()
     expect(screen.getByText(/^01:(29|30)$/)).toBeInTheDocument()
   })
 

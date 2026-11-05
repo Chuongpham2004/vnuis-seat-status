@@ -85,39 +85,35 @@ export default function SeatDetail({ seat, activeReservation, onBooked, onClose 
   }
 
   return (
-    <section className="card p-4 space-y-3" aria-label={`Chi tiết ghế ${seat.seatCode}`}>
-      <div className="flex items-start justify-between gap-2">
+    <section className="p-5 space-y-5" aria-label={`Chi tiết ghế ${seat.seatCode}`}>
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="label">Ghế</p>
-          <p className="text-2xl font-bold">{seat.seatCode}</p>
+          <p className="text-sm secondary">{seat.quietZone ? 'Khu yên tĩnh' : `Khu ${seat.zoneCode}`}</p>
+          <p className="text-5xl font-extrabold tracking-tight leading-none mt-1">{seat.seatCode}</p>
         </div>
-        <button className="toast-close" onClick={onClose} aria-label="Bỏ chọn ghế">
-          ×
+        <button className="btn btn-sm" onClick={onClose} aria-label="Đóng chi tiết ghế">
+          Đóng
         </button>
       </div>
-      <p className="flex items-center gap-2 text-sm">
+      <p className="flex items-center gap-2">
         <span className={'swatch ' + meta.className} />
         <span className="font-semibold">
           {meta.icon} {meta.label}
         </span>
+        {!seat.deviceOnline && <span className="text-sm secondary">(cảm biến mất kết nối)</span>}
       </p>
-      <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
-        <dt className="secondary">Khu</dt>
-        <dd>
-          {seat.zoneCode}
-          {seat.quietZone && ' (yên tĩnh)'}
-        </dd>
+      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm border-y border-[var(--grid)] py-4">
         <dt className="secondary">Loại</dt>
         <dd>{SEAT_TYPE[seat.seatType] || seat.seatType}</dd>
         <dt className="secondary">Ổ điện</dt>
         <dd>{seat.hasPowerOutlet ? 'Có' : 'Không'}</dd>
         <dt className="secondary">Cảm biến</dt>
         <dd>
-          {seat.simulatedDevice ? 'Giả lập' : 'ESP32 thật'} · {seat.deviceOnline ? 'online' : 'offline'}
+          {seat.simulatedDevice ? 'Giả lập' : 'ESP32 thật'}, {seat.deviceOnline ? 'đang hoạt động' : 'mất kết nối'}
         </dd>
         {seat.lastDistanceCm != null && (
           <>
-            <dt className="secondary">Khoảng cách</dt>
+            <dt className="secondary">Khoảng cách đo</dt>
             <dd className="tabular-nums">{seat.lastDistanceCm.toFixed(1)} cm</dd>
           </>
         )}

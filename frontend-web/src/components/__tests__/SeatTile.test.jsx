@@ -26,7 +26,8 @@ describe('SeatTile', () => {
     const btn = screen.getByRole('button')
     expect(btn).toHaveClass('offline')
     expect(btn).toHaveAccessibleName(/Đã đặt.*mất kết nối.*ghế của bạn/)
-    expect(btn).toHaveTextContent('Của bạn')
+    expect(btn).toHaveClass('mine')
+    expect(btn).toHaveTextContent('★')
   })
 
   it('reports clicks', async () => {

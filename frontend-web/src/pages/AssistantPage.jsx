@@ -62,7 +62,7 @@ function Message({ m, onBook, busy }) {
                 Đặt {s.seatCode}
                 <span className="muted font-normal">
                   {s.hasPowerOutlet ? ' ⚡' : ''}
-                  {s.quietZone ? ' 🤫' : ''} · khu {s.zoneOccupancyPercent}%
+                  {s.quietZone ? ' 🤫' : ''}, khu đang dùng {s.zoneOccupancyPercent}%
                 </span>
               </button>
             ))}
