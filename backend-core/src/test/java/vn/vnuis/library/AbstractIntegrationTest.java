@@ -41,6 +41,7 @@ import vn.vnuis.library.security.JwtService;
 })
 public abstract class AbstractIntegrationTest {
 
+    @SuppressWarnings("resource") // shared for the whole run; Testcontainers' Ryuk removes it
     static final PostgreSQLContainer<?> POSTGRES = new PostgreSQLContainer<>("postgres:16-alpine")
             .withDatabaseName("library");
 

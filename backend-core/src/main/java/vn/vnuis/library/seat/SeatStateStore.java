@@ -10,6 +10,7 @@ import java.util.Optional;
 import org.springframework.data.redis.core.RedisOperations;
 import org.springframework.data.redis.core.SessionCallback;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import vn.vnuis.library.domain.SeatStatus;
 
@@ -60,7 +61,7 @@ public class SeatStateStore {
         List<String> codes = List.copyOf(seatCodes);
         List<Object> results = redis.executePipelined(new SessionCallback<Object>() {
             @Override
-            public <K, V> Object execute(RedisOperations<K, V> operations) {
+            public <K, V> Object execute(@NonNull RedisOperations<K, V> operations) {
                 for (String code : codes) {
                     operations.opsForHash().entries((K) key(code));
                 }

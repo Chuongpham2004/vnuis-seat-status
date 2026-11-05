@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.connection.Message;
 import org.springframework.data.redis.listener.KeyExpirationEventMessageListener;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import vn.vnuis.library.config.AppProperties;
 import vn.vnuis.library.seat.SeatStateMachine;
@@ -37,7 +38,7 @@ public class SeatTimerExpirationListener extends KeyExpirationEventMessageListen
     }
 
     @Override
-    protected void doHandleMessage(Message message) {
+    protected void doHandleMessage(@NonNull Message message) {
         String key = new String(message.getBody(), StandardCharsets.UTF_8);
         try {
             if (key.startsWith(SeatTimerService.RESERVATION_EXPIRE)) {
