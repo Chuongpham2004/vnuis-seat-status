@@ -9,11 +9,11 @@ Graduation capstone: real-time library seat monitoring (ESP32 + HC-SR04 and a mu
 | Folder | What | Status |
 |---|---|---|
 | `infra/` | Docker Compose: PostgreSQL 16, Redis 7 (expiry events), EMQX 5 | ✅ Phase 1 |
-| `backend-core/` | Spring Boot 3 / Java 21 — seat state machine, booking, MQTT, WebSocket. Flyway migrations live in `src/main/resources/db/migration` | ✅ Phase 2 |
+| `backend-core/` | Spring Boot 3 / Java 25 — seat state machine, booking, MQTT, WebSocket. Flyway migrations live in `src/main/resources/db/migration` | ✅ Phase 2 |
 | `iot-edge/` | ESP32 + HC-SR04 firmware (PlatformIO) for seat A-01: see [iot-edge/README.md](iot-edge/README.md) | ✅ Phase 3 |
 | `iot-simulator/` | 59 virtual seats over MQTT, ambient waves + demo CLI/HTTP control: see [iot-simulator/README.md](iot-simulator/README.md) | ✅ Phase 3 |
 | `ai-service/` | FastAPI: synthetic history, LightGBM vs. moving-average forecast (MAE/RMSE/MAPE/R²), tool-calling assistant (Claude/OpenAI/Gemini/Ollama or the built-in deterministic engine): see [ai-service/README.md](ai-service/README.md) | ✅ Phase 4 |
-| `frontend-web/` | React (Vite) + Tailwind — student map, admin dashboard (currently the earlier Firebase prototype) | ⏳ Phase 5 |
+| `frontend-web/` | React 19 (Vite) + Tailwind 4 + STOMP — live seat map, booking & QR check-in, forecasts, AI assistant, admin dashboard / devices / credit / QR / model metrics: see [frontend-web/README.md](frontend-web/README.md) | ✅ Phase 5 |
 | `docs/` | Architecture, MQTT contract, REST/WebSocket API | |
 
 See [docs/architecture.md](docs/architecture.md), [docs/mqtt-contract.md](docs/mqtt-contract.md) and [docs/api-contract.md](docs/api-contract.md).
@@ -43,7 +43,7 @@ Reset everything (deletes volumes): `./scripts/dev.ps1 reset`.
 
 ## backend-core
 
-Requirements: JDK 21+ (JDK 24 works; bytecode targets 21). Maven is provided by the wrapper.
+Requirements: JDK 25+ (latest LTS). Maven is provided by the wrapper.
 
 ```sh
 cd backend-core
@@ -54,3 +54,16 @@ cd backend-core
 
 Timers can also be set with env vars: `RESERVATION_TTL_SECONDS`, `AWAY_TTL_SECONDS`, `WALKIN_GRACE_SECONDS`, `AWAY_GRACE_SECONDS`.
 Health check: http://localhost:8080/actuator/health
+
+## frontend-web
+
+Requirements: Node 20+.
+
+```sh
+cd frontend-web
+npm install
+npm run dev      # http://localhost:5173, proxies /api + /ws to :8080 and /sim to the simulator on :8090
+npm test         # Vitest
+```
+
+Everything in Docker: `docker compose -f infra/docker-compose.yml --profile app up -d --build`, then open http://localhost:5173.

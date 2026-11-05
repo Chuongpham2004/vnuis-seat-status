@@ -1,10 +1,24 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import './index.css'
+import { BrowserRouter } from 'react-router-dom'
 import App from './App.jsx'
+import { AuthProvider } from './auth/AuthContext'
+import NotificationListener from './components/NotificationListener'
+import { ToastProvider } from './components/Toasts'
+import './index.css'
+import { RealtimeProvider } from './realtime/RealtimeContext'
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <App />
+    <BrowserRouter>
+      <AuthProvider>
+        <RealtimeProvider>
+          <ToastProvider>
+            <NotificationListener />
+            <App />
+          </ToastProvider>
+        </RealtimeProvider>
+      </AuthProvider>
+    </BrowserRouter>
   </StrictMode>,
 )
