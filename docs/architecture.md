@@ -14,7 +14,7 @@ flowchart LR
     end
 
     subgraph Backend
-        BE[backend-core<br/>Spring Boot 3 / Java 21]
+        BE[backend-core<br/>Spring Boot 3 / Java 25]
         AI[ai-service<br/>FastAPI: XGBoost + Claude agent]
     end
 
