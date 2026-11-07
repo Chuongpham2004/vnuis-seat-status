@@ -34,20 +34,20 @@ def default_seats() -> list[SeatSpec]:
             seats.append(SeatSpec(
                 seat_code=code,
                 zone_code=zone,
-                device_id="SIM-" + code.replace("-", ""),
+                device_id="ESP32-A01" if code == "A-01" else "SIM-" + code.replace("-", ""),
                 quiet_zone=zone == "A",
                 group_table=zone == "C" and n <= 8,
             ))
     return seats
 
 
-def fetch_seats(backend_url: str, timeout: float = 3.0) -> list[SeatSpec]:
-    """Seats whose device is simulated, from GET /api/v1/seats (public endpoint)."""
+def fetch_seats(backend_url: str, timeout: float = 3.0, include_physical: bool = False) -> list[SeatSpec]:
+    """Seats whose device is simulated (plus physical ones if asked), from GET /api/v1/seats."""
     resp = httpx.get(f"{backend_url.rstrip('/')}/api/v1/seats", timeout=timeout)
     resp.raise_for_status()
     seats = []
     for s in resp.json():
-        if not s.get("simulatedDevice", True):
+        if not include_physical and not s.get("simulatedDevice", True):
             continue
         seats.append(SeatSpec(
             seat_code=s["seatCode"],
@@ -63,7 +63,7 @@ def load_seats(settings: Settings) -> list[SeatSpec]:
     seats: list[SeatSpec] | None = None
     if settings.backend_url:
         try:
-            seats = fetch_seats(settings.backend_url)
+            seats = fetch_seats(settings.backend_url, include_physical=settings.simulate_esp32)
             log.info("Loaded %d simulated seats from %s", len(seats), settings.backend_url)
         except Exception as exc:  # backend down or not started yet
             log.warning("Could not load seats from backend (%s); using built-in layout", exc)

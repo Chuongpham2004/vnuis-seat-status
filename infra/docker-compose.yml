@@ -153,7 +153,8 @@ services:
       MQTT_USER: simulator
       MQTT_PASSWORD: ${MQTT_SIMULATOR_PASSWORD:-simulator_dev_pw}
       BACKEND_URL: http://backend-core:8080
-      SIM_SEATS: ${SIM_SEATS:-59}
+      SIM_SEATS: ${SIM_SEATS:-60}
+      SIMULATE_ESP32: ${SIMULATE_ESP32:-false}
     ports:
       - "${SIMULATOR_PORT:-8090}:8090"
     depends_on:

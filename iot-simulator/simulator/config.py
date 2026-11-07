@@ -17,8 +17,10 @@ class Settings(BaseSettings):
 
     # Seat list: fetched from backend-core if reachable, otherwise the built-in A/B/C x 20 layout.
     backend_url: str | None = "http://localhost:8080"
-    sim_seats: int = 59  # at most this many virtual seats
+    sim_seats: int = 60  # at most this many virtual seats
     exclude_seats: str = "A-01"  # comma separated; A-01 is the physical ESP32
+    # Also play the physical ESP32 seats (A-01) when the board is not flashed/connected.
+    simulate_esp32: bool = False
 
     # Behaviour
     mode: str = "ambient"  # "ambient" (automatic arrivals/departures) or "manual"
@@ -33,4 +35,6 @@ class Settings(BaseSettings):
     control_port: int = 8090
 
     def excluded(self) -> set[str]:
+        if self.simulate_esp32:
+            return set()
         return {s.strip().upper() for s in self.exclude_seats.split(",") if s.strip()}

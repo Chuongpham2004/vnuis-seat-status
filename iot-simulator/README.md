@@ -20,7 +20,9 @@ python -m simulator run -i --speed 60        # + interactive console; 1 simulate
 python -m simulator run --mode manual        # nobody moves unless you say so
 ```
 
-Settings come from env vars (or `.env`): `MQTT_HOST`, `MQTT_PORT`, `MQTT_USER`, `MQTT_PASSWORD`, `BACKEND_URL`, `SIM_SEATS`, `MODE`, `SPEED`, `START_HOUR`, `CONTROL_PORT`. The defaults match `infra/docker-compose.yml`.
+**No ESP32 at hand?** Set `SIMULATE_ESP32=true` and the simulator also plays `A-01` (device `ESP32-A01`), so all 60 seats are live.
+
+Settings come from env vars (or `.env`): `MQTT_HOST`, `MQTT_PORT`, `MQTT_USER`, `MQTT_PASSWORD`, `BACKEND_URL`, `SIM_SEATS`, `SIMULATE_ESP32`, `MODE`, `SPEED`, `START_HOUR`, `CONTROL_PORT`. The defaults match `infra/docker-compose.yml`.
 
 ## Modes
 
