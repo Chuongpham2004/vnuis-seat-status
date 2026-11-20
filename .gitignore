@@ -32,6 +32,7 @@ venv/
 *.egg-info/
 ai-service/models/*.joblib
 ai-service/data/*.csv
+face-service/models/
 
 # PlatformIO
 .pio/
