@@ -1,8 +1,10 @@
 package vn.vnuis.library.web.dto;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import java.time.Duration;
 import java.time.Instant;
@@ -35,12 +37,12 @@ public final class Dtos {
     }
 
     public record UserView(UUID id, String studentCode, String email, String fullName, Role role,
-                           int creditScore, Instant bannedUntil, boolean canBook) {
+                           int creditScore, Instant bannedUntil, boolean canBook, boolean faceEnrolled) {
 
-        public static UserView of(User u, int minToBook, Instant now) {
+        public static UserView of(User u, int minToBook, Instant now, boolean faceEnrolled) {
             boolean canBook = !u.isBannedAt(now) && u.getCreditScore() >= minToBook;
             return new UserView(u.getId(), u.getStudentCode(), u.getEmail(), u.getFullName(), u.getRole(),
-                    u.getCreditScore(), u.getBannedUntil(), canBook);
+                    u.getCreditScore(), u.getBannedUntil(), canBook, faceEnrolled);
         }
     }
 
@@ -81,11 +83,28 @@ public final class Dtos {
 
     // ---------------- reservations ----------------
 
-    /** {@code source} may be APP_MAP (default) or AI_CHATBOT; WALK_IN is created by sensors only. */
-    public record CreateReservationRequest(@NotBlank String seatCode, BookingSource source) {
+    /**
+     * {@code source} may be APP_MAP (default) or AI_CHATBOT; WALK_IN is created by sensors only.
+     * {@code faceToken} comes from POST /face/verify (required while app.face.enabled).
+     */
+    public record CreateReservationRequest(@NotBlank String seatCode, BookingSource source, String faceToken) {
     }
 
-    public record AiReserveRequest(@NotBlank String seatCode) {
+    public record AiReserveRequest(@NotBlank String seatCode, String faceToken) {
+    }
+
+    // ---------------- face verification ----------------
+
+    /** One camera frame: base64 JPEG, captured while the student was asked to do {@code step}. */
+    public record FaceFrame(@NotBlank String step, @NotBlank @Size(max = 600_000) String image) {
+    }
+
+    public record FaceEnrollRequest(@NotBlank String challengeId, boolean consent,
+                                    @NotEmpty @Size(max = 12) List<@Valid FaceFrame> frames) {
+    }
+
+    public record FaceVerifyRequest(@NotBlank String challengeId,
+                                    @NotEmpty @Size(max = 12) List<@Valid FaceFrame> frames) {
     }
 
     public record CheckInRequest(@NotBlank String qrCodeToken) {

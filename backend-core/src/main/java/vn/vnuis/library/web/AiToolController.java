@@ -17,6 +17,7 @@ import vn.vnuis.library.domain.Enums.BookingSource;
 import vn.vnuis.library.domain.Enums.SeatType;
 import vn.vnuis.library.domain.Reservation;
 import vn.vnuis.library.error.ApiException;
+import vn.vnuis.library.face.FaceVerificationService;
 import vn.vnuis.library.repository.HourlyOccupancyStatRepository;
 import vn.vnuis.library.seat.SeatCatalog;
 import vn.vnuis.library.seat.SeatQueryService;
@@ -36,7 +37,8 @@ import vn.vnuis.library.web.dto.Dtos.SeatRecommendation;
  * <ul>
  *   <li>{@code find_optimal_seats} -> GET /optimal-seats</li>
  *   <li>{@code get_occupancy_forecast} -> GET /occupancy (live + last 24 h; the forecast itself comes from ai-service)</li>
- *   <li>{@code reserve_seat_for_user} -> POST /reservations</li>
+ *   <li>{@code reserve_seat_for_user} -> POST /reservations (403 FACE_VERIFICATION_REQUIRED while face
+ *       verification is on: the web app then runs the face check and books the seat itself)</li>
  * </ul>
  */
 @RestController
@@ -47,9 +49,11 @@ public class AiToolController {
     private final SeatStateMachine stateMachine;
     private final SeatCatalog catalog;
     private final HourlyOccupancyStatRepository stats;
+    private final FaceVerificationService faces;
 
     public AiToolController(SeatQueryService queries, SeatStateMachine stateMachine, SeatCatalog catalog,
-                            HourlyOccupancyStatRepository stats) {
+                            HourlyOccupancyStatRepository stats, FaceVerificationService faces) {
+        this.faces = faces;
         this.queries = queries;
         this.stateMachine = stateMachine;
         this.catalog = catalog;
@@ -85,6 +89,7 @@ public class AiToolController {
     @PostMapping("/reservations")
     public ResponseEntity<ReservationView> reserve(@AuthenticationPrincipal AuthUser auth,
                                                    @Valid @RequestBody AiReserveRequest request) {
+        faces.requireToken(auth.id(), request.faceToken());
         Reservation r = stateMachine.reserve(auth.id(), request.seatCode(), BookingSource.AI_CHATBOT);
         return ResponseEntity.status(HttpStatus.CREATED).body(ReservationView.of(r, catalog.requireById(r.getSeatId())));
     }

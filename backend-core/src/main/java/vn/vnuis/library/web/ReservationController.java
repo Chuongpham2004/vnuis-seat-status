@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.vnuis.library.domain.Enums.BookingSource;
 import vn.vnuis.library.domain.Reservation;
 import vn.vnuis.library.domain.ReservationStatus;
+import vn.vnuis.library.face.FaceVerificationService;
 import vn.vnuis.library.repository.ReservationRepository;
 import vn.vnuis.library.seat.SeatCatalog;
 import vn.vnuis.library.seat.SeatStateMachine;
@@ -32,18 +33,25 @@ public class ReservationController {
     private final SeatStateMachine stateMachine;
     private final ReservationRepository reservations;
     private final SeatCatalog catalog;
+    private final FaceVerificationService faces;
 
-    public ReservationController(SeatStateMachine stateMachine, ReservationRepository reservations, SeatCatalog catalog) {
+    public ReservationController(SeatStateMachine stateMachine, ReservationRepository reservations, SeatCatalog catalog,
+                                 FaceVerificationService faces) {
         this.stateMachine = stateMachine;
         this.reservations = reservations;
         this.catalog = catalog;
+        this.faces = faces;
     }
 
-    /** 201 / 409 SEAT_NOT_AVAILABLE|SEAT_BUSY|USER_HAS_ACTIVE_RESERVATION / 403 USER_BANNED|INSUFFICIENT_CREDIT */
+    /**
+     * 201 / 409 SEAT_NOT_AVAILABLE|SEAT_BUSY|USER_HAS_ACTIVE_RESERVATION
+     * / 403 USER_BANNED|INSUFFICIENT_CREDIT|FACE_VERIFICATION_REQUIRED
+     */
     @PostMapping
     public ResponseEntity<ReservationView> create(@AuthenticationPrincipal AuthUser auth,
                                                   @Valid @RequestBody CreateReservationRequest request) {
         BookingSource source = request.source() == null ? BookingSource.APP_MAP : request.source();
+        faces.requireToken(auth.id(), request.faceToken());
         Reservation r = stateMachine.reserve(auth.id(), request.seatCode(), source);
         return ResponseEntity.status(HttpStatus.CREATED).body(view(r));
     }

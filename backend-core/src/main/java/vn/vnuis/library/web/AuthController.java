@@ -14,6 +14,7 @@ import vn.vnuis.library.config.CreditProperties;
 import vn.vnuis.library.credit.CreditService;
 import vn.vnuis.library.domain.User;
 import vn.vnuis.library.error.ApiException;
+import vn.vnuis.library.repository.FaceProfileRepository;
 import vn.vnuis.library.repository.UserRepository;
 import vn.vnuis.library.security.AuthUser;
 import vn.vnuis.library.security.JwtService;
@@ -30,9 +31,11 @@ public class AuthController {
     private final JwtService jwtService;
     private final CreditProperties creditProps;
     private final CreditService credit;
+    private final FaceProfileRepository faceProfiles;
 
     public AuthController(UserRepository users, PasswordEncoder passwordEncoder, JwtService jwtService,
-                          CreditProperties creditProps, CreditService credit) {
+                          CreditProperties creditProps, CreditService credit, FaceProfileRepository faceProfiles) {
+        this.faceProfiles = faceProfiles;
         this.credit = credit;
         this.users = users;
         this.passwordEncoder = passwordEncoder;
@@ -62,6 +65,6 @@ public class AuthController {
         credit.resetProbationIfDue(userId);
         User user = users.findById(userId)
                 .orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User not found"));
-        return UserView.of(user, creditProps.minToBook(), Instant.now());
+        return UserView.of(user, creditProps.minToBook(), Instant.now(), faceProfiles.existsById(userId));
     }
 }

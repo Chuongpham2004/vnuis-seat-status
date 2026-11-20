@@ -6,12 +6,14 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,7 +28,9 @@ import vn.vnuis.library.credit.CreditService.CreditChange;
 import vn.vnuis.library.domain.HourlyOccupancyStat;
 import vn.vnuis.library.domain.User;
 import vn.vnuis.library.error.ApiException;
+import vn.vnuis.library.face.FaceVerificationService;
 import vn.vnuis.library.realtime.SeatEventBroadcaster;
+import vn.vnuis.library.repository.FaceProfileRepository;
 import vn.vnuis.library.repository.HourlyOccupancyStatRepository;
 import vn.vnuis.library.repository.IotDeviceRepository;
 import vn.vnuis.library.repository.UserRepository;
@@ -57,11 +61,16 @@ public class AdminController {
     private final CreditProperties creditProps;
     private final TransactionTemplate tx;
     private final SeatEventBroadcaster broadcaster;
+    private final FaceProfileRepository faceProfiles;
+    private final FaceVerificationService faces;
 
     public AdminController(IotDeviceRepository devices, UserRepository users, HourlyOccupancyStatRepository stats,
                            SeatCatalog catalog, SeatStateStore store, SeatStateMachine stateMachine,
                            CreditService credit, CreditProperties creditProps, TransactionTemplate tx,
-                           SeatEventBroadcaster broadcaster) {
+                           SeatEventBroadcaster broadcaster, FaceProfileRepository faceProfiles,
+                           FaceVerificationService faces) {
+        this.faceProfiles = faceProfiles;
+        this.faces = faces;
         this.devices = devices;
         this.users = users;
         this.stats = stats;
@@ -92,8 +101,11 @@ public class AdminController {
                                 @RequestParam(defaultValue = "50") int limit) {
         Instant now = Instant.now();
         String query = q == null || q.isBlank() ? null : q.trim();
-        return users.search(query, PageRequest.of(0, Math.min(limit, 200))).stream()
-                .map(u -> UserView.of(u, creditProps.minToBook(), now))
+        List<User> page = users.search(query, PageRequest.of(0, Math.min(limit, 200)));
+        Set<UUID> enrolled = page.isEmpty() ? Set.of()
+                : faceProfiles.findEnrolledAmong(page.stream().map(User::getId).toList());
+        return page.stream()
+                .map(u -> UserView.of(u, creditProps.minToBook(), now, enrolled.contains(u.getId())))
                 .toList();
     }
 
@@ -112,7 +124,15 @@ public class AdminController {
                     "Credit adjusted by library staff: " + request.delta() + " (" + request.reason() + ")", change);
         }
         User user = users.findById(id).orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User not found"));
-        return UserView.of(user, creditProps.minToBook(), Instant.now());
+        return UserView.of(user, creditProps.minToBook(), Instant.now(), faceProfiles.existsById(id));
+    }
+
+    /** Librarian reset: the student enrols again at their next booking. */
+    @DeleteMapping("/users/{id}/face")
+    public ResponseEntity<Void> resetFace(@PathVariable UUID id) {
+        users.findById(id).orElseThrow(() -> ApiException.notFound("USER_NOT_FOUND", "User not found"));
+        faces.delete(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/seats/{seatCode}/force-release")
