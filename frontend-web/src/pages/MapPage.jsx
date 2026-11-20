@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
 import Recommendations from '../components/Recommendations'
 import ReservationCard from '../components/ReservationCard'
@@ -88,7 +88,9 @@ export default function MapPage() {
   const { user, isAdmin } = useAuth()
   const { zones, seats, seatsByCode, loading, error } = useLiveSeats()
   const { reservation, setReservation, reload } = useActiveReservation()
-  const [selectedCode, setSelectedCode] = useState(null)
+  const [searchParams] = useSearchParams()
+  // ?seat=A-05 reopens a seat, e.g. after the face enrolment that interrupted its booking
+  const [selectedCode, setSelectedCode] = useState(() => searchParams.get('seat'))
   const [zoneFilter, setZoneFilter] = useState('')
   const [filters, setFilters] = useState({ quiet: false, power: false, type: '', onlyAvailable: false })
   const [since] = useState(() => Date.now())

@@ -53,6 +53,7 @@ function CreditForm({ user, onDone, onCancel }) {
 }
 
 export default function AdminUsers() {
+  const { push } = useToast()
   const [q, setQ] = useState('')
   const [users, setUsers] = useState([])
   const [error, setError] = useState(null)
@@ -70,6 +71,17 @@ export default function AdminUsers() {
     }, 250)
     return () => clearTimeout(t)
   }, [q])
+
+  const resetFace = async (u) => {
+    if (!window.confirm(`Xoá khuôn mặt đã đăng ký của ${u.studentCode}? Sinh viên sẽ đăng ký lại ở lần đặt ghế tới.`)) return
+    try {
+      await api.adminFaceReset(u.id)
+      setUsers((list) => list.map((x) => (x.id === u.id ? { ...x, faceEnrolled: false } : x)))
+      push({ title: `Đã đặt lại khuôn mặt của ${u.studentCode}`, tone: 'good' })
+    } catch (e) {
+      setError(errorMessage(e))
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -92,6 +104,7 @@ export default function AdminUsers() {
               <th>Vai trò</th>
               <th>Uy tín</th>
               <th>Đặt chỗ</th>
+              <th>Khuôn mặt</th>
               <th />
             </tr>
           </thead>
@@ -118,6 +131,21 @@ export default function AdminUsers() {
                     )}
                   </td>
                   <td>
+                    {u.role === 'ADMIN' ? null : u.faceEnrolled ? (
+                      <span className="flex items-center gap-2">
+                        <span className="chip tone-good">
+                          <span className="dot" />
+                          Đã đăng ký
+                        </span>
+                        <button className="btn btn-sm" onClick={() => resetFace(u)} aria-label={`Đặt lại khuôn mặt ${u.studentCode}`}>
+                          Đặt lại
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="muted text-sm">Chưa đăng ký</span>
+                    )}
+                  </td>
+                  <td>
                     {u.role !== 'ADMIN' && (
                       <button className="btn btn-sm" onClick={() => setEditing(editing === u.id ? null : u.id)}>
                         Điều chỉnh
@@ -127,7 +155,7 @@ export default function AdminUsers() {
                 </tr>
                 {editing === u.id && (
                   <tr>
-                    <td colSpan={7}>
+                    <td colSpan={8}>
                       <CreditForm
                         user={u}
                         onCancel={() => setEditing(null)}

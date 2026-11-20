@@ -5,6 +5,7 @@ import { api } from '../lib/api'
 import { errorMessage } from '../lib/errors'
 import { formatDateTime } from '../lib/format'
 import { SEAT_TYPE, seatStatusMeta } from '../lib/seatStatus'
+import { useFaceBooking } from '../hooks/useFaceBooking'
 import { useToast } from './Toasts'
 
 /** Side panel for the selected seat: details, booking, admin force-release. */
@@ -15,19 +16,20 @@ export default function SeatDetail({ seat, activeReservation, onBooked, onClose 
   const [error, setError] = useState(null)
   const meta = seatStatusMeta(seat.status)
 
-  const book = async () => {
-    setBusy(true)
-    setError(null)
-    try {
-      const r = await api.reserve(seat.seatCode)
+  const booking = useFaceBooking({
+    onBooked: (r) => {
       push({ title: `Đã giữ ghế ${seat.seatCode}`, message: 'Hãy đến check-in trước khi hết giờ.', tone: 'good' })
       onBooked?.(r)
-    } catch (e) {
+    },
+    onError: (e) => {
       setError(errorMessage(e))
       if (e.code === 'USER_BANNED' || e.code === 'INSUFFICIENT_CREDIT') refreshUser().catch(() => {})
-    } finally {
-      setBusy(false)
-    }
+    },
+  })
+
+  const book = () => {
+    setError(null)
+    booking.start(seat.seatCode, 'APP_MAP')
   }
 
   const forceRelease = async () => {
@@ -76,8 +78,8 @@ export default function SeatDetail({ seat, activeReservation, onBooked, onClose 
     )
   } else if (seat.status === 'AVAILABLE') {
     action = (
-      <button className="btn btn-primary w-full" onClick={book} disabled={busy}>
-        {busy ? 'Đang đặt…' : `Đặt ghế ${seat.seatCode}`}
+      <button className="btn btn-primary w-full" onClick={book} disabled={busy || booking.busy}>
+        {booking.busy ? 'Đang đặt…' : `Đặt ghế ${seat.seatCode}`}
       </button>
     )
   } else {
@@ -126,6 +128,7 @@ export default function SeatDetail({ seat, activeReservation, onBooked, onClose 
         </p>
       )}
       {action}
+      {booking.modal}
     </section>
   )
 }

@@ -108,6 +108,12 @@ export default function MyReservationsPage() {
               Đang bị khoá đặt chỗ{user.bannedUntil ? ` đến ${formatDateTime(user.bannedUntil)}` : ''}.
             </p>
           )}
+          <p className="text-sm border-t border-[var(--grid)] pt-3">
+            Khuôn mặt: {user.faceEnrolled ? 'đã đăng ký' : 'chưa đăng ký'} ·{' '}
+            <Link to="/face/enroll" className="text-[var(--accent)] font-semibold">
+              Quản lý
+            </Link>
+          </p>
         </section>
       </div>
 

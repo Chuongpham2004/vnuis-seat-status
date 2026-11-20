@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
+import { useFaceBooking } from '../hooks/useFaceBooking'
 import { api } from '../lib/api'
 import { errorMessage } from '../lib/errors'
 import { formatTime } from '../lib/format'
@@ -37,7 +38,13 @@ function ToolCalls({ calls }) {
   )
 }
 
-function Message({ m, onBook, busy }) {
+/** Seat the assistant tried to book but that needs the face check first (done by the web app). */
+function faceBlockedSeat(r) {
+  const call = r.toolCalls?.find((c) => c.name === 'reserve_seat' && !c.ok && c.error?.code === 'FACE_VERIFICATION_REQUIRED')
+  return call ? call.arguments?.seat_code : null
+}
+
+function Message({ m, onBook, onFaceBook, busy }) {
   if (m.role === 'user') {
     return (
       <div className="flex justify-end">
@@ -51,6 +58,7 @@ function Message({ m, onBook, busy }) {
     return <p className="text-sm text-[var(--critical)]">{m.text}</p>
   }
   const r = m.data
+  const faceSeat = !r.reservation && faceBlockedSeat(r)
   return (
     <div className="flex">
       <div className="max-w-[85%] rounded-2xl rounded-bl-sm card px-4 py-3">
@@ -67,6 +75,11 @@ function Message({ m, onBook, busy }) {
               </button>
             ))}
           </div>
+        )}
+        {faceSeat && (
+          <button className="btn btn-primary btn-sm mt-3" disabled={busy} onClick={() => onFaceBook(faceSeat)}>
+            Xác thực khuôn mặt và đặt {faceSeat}
+          </button>
         )}
         {r.reservation && (
           <div className="mt-3 rounded-lg bg-[var(--surface-2)] p-3 text-sm">
@@ -91,6 +104,19 @@ export default function AssistantPage() {
   const [busy, setBusy] = useState(false)
   const [sessionId, setSessionId] = useState(() => sessionStorage.getItem(SESSION_KEY))
   const endRef = useRef(null)
+  const faceBooking = useFaceBooking({
+    onBooked: (reservation) => {
+      setMessages((list) => [
+        ...list,
+        {
+          role: 'assistant',
+          data: { reply: `Đã xác thực khuôn mặt và giữ ghế ${reservation.seatCode} cho bạn.`, reservation, engine: 'face-check' },
+        },
+      ])
+      refreshUser().catch(() => {})
+    },
+    onError: (e) => setMessages((list) => [...list, { role: 'error', text: errorMessage(e) }]),
+  })
 
   useEffect(() => {
     endRef.current?.scrollIntoView?.({ behavior: 'smooth', block: 'end' })
@@ -151,11 +177,18 @@ export default function AssistantPage() {
           </div>
         )}
         {messages.map((m, i) => (
-          <Message key={i} m={m} busy={busy} onBook={(code) => send(`Đặt ghế ${code}`)} />
+          <Message
+            key={i}
+            m={m}
+            busy={busy || faceBooking.busy}
+            onBook={(code) => send(`Đặt ghế ${code}`)}
+            onFaceBook={(code) => faceBooking.start(code, 'AI_CHATBOT')}
+          />
         ))}
         {busy && <p className="text-sm muted">Trợ lý đang trả lời…</p>}
         <div ref={endRef} />
       </div>
+      {faceBooking.modal}
 
       <form
         className="sticky bottom-4 card p-2 flex gap-2"

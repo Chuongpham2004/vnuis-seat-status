@@ -87,14 +87,23 @@ export const api = {
   recommendations: (params) => request('/seats/recommendations', { params }),
 
   // reservations
-  reserve: (seatCode, source = 'APP_MAP') =>
-    request('/reservations', { method: 'POST', body: { seatCode, source } }),
+  reserve: (seatCode, source = 'APP_MAP', faceToken) =>
+    request('/reservations', { method: 'POST', body: { seatCode, source, faceToken } }),
   activeReservation: () => request('/reservations/me/active'),
   myReservations: (limit = 20) => request('/reservations/me', { params: { limit } }),
   checkIn: (id, qrCodeToken) =>
     request(`/reservations/${id}/check-in`, { method: 'POST', body: { qrCodeToken } }),
   checkOut: (id) => request(`/reservations/${id}/check-out`, { method: 'POST' }),
   cancel: (id) => request(`/reservations/${id}/cancel`, { method: 'POST' }),
+
+  // face verification (YOLOv8-face + ArcFace via face-service)
+  faceStatus: () => request('/face/me'),
+  faceChallenge: () => request('/face/challenge', { method: 'POST' }),
+  faceEnroll: (challengeId, frames, consent) =>
+    request('/face/enroll', { method: 'POST', body: { challengeId, frames, consent } }),
+  faceVerify: (challengeId, frames) => request('/face/verify', { method: 'POST', body: { challengeId, frames } }),
+  faceDelete: () => request('/face/me', { method: 'DELETE' }),
+  adminFaceReset: (userId) => request(`/admin/users/${userId}/face`, { method: 'DELETE' }),
 
   // AI (proxied to ai-service)
   forecast: (zoneCode, hours = 24) => request('/ai/forecast', { params: { zoneCode, hours } }),

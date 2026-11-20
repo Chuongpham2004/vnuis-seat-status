@@ -7,6 +7,7 @@ import AdminDevices from './pages/admin/AdminDevices'
 import AdminQr from './pages/admin/AdminQr'
 import AdminUsers from './pages/admin/AdminUsers'
 import AssistantPage from './pages/AssistantPage'
+import FaceEnrollPage from './pages/FaceEnrollPage'
 import ForecastPage from './pages/ForecastPage'
 import LoginPage from './pages/LoginPage'
 import MapPage from './pages/MapPage'
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="login" element={<LoginPage />} />
         <Route path="forecast" element={<ForecastPage />} />
         <Route path="me" element={<RequireAuth><MyReservationsPage /></RequireAuth>} />
+        <Route path="face/enroll" element={<RequireAuth><FaceEnrollPage /></RequireAuth>} />
         <Route path="assistant" element={<RequireAuth><AssistantPage /></RequireAuth>} />
         <Route path="admin" element={<RequireAuth admin><AdminDashboard /></RequireAuth>} />
         <Route path="admin/devices" element={<RequireAuth admin><AdminDevices /></RequireAuth>} />

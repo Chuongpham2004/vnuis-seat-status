@@ -71,6 +71,7 @@ describe('MapPage', () => {
       canBook: true,
     })
     vi.spyOn(api, 'activeReservation').mockResolvedValue(null)
+    vi.spyOn(api, 'faceStatus').mockResolvedValue({ enrolled: false, requiredForBooking: false })
     vi.spyOn(api, 'reserve').mockResolvedValue({
       id: 'r1',
       seatCode: 'A-01',
@@ -85,7 +86,7 @@ describe('MapPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: /^Ghế A-01/ }))
     await userEvent.click(await screen.findByRole('button', { name: 'Đặt ghế A-01' }))
 
-    expect(api.reserve).toHaveBeenCalledWith('A-01')
+    expect(api.reserve).toHaveBeenCalledWith('A-01', 'APP_MAP', undefined)
     // The reservation card replaces the booking button.
     expect(await screen.findByRole('region', { name: 'Lượt đặt chỗ hiện tại' })).toBeInTheDocument()
     expect(screen.getByText('Đây là ghế bạn đang giữ.')).toBeInTheDocument()
