@@ -27,7 +27,7 @@ Auth: `Authorization: Bearer <accessToken>` from `POST /auth/login`. 🔓 = publ
 ## Reservations
 | Method | Path | Success | Errors |
 |---|---|---|---|
-| POST | `/reservations` `{"seatCode":"A-05","source":"APP_MAP"}` | 201 `ReservationView` (PENDING) | 409 `SEAT_NOT_AVAILABLE` / `SEAT_BUSY` / `USER_HAS_ACTIVE_RESERVATION`, 403 `USER_BANNED` / `INSUFFICIENT_CREDIT` |
+| POST | `/reservations` `{"seatCode":"A-05","source":"APP_MAP","faceToken":"..."}` | 201 `ReservationView` (PENDING) | 409 `SEAT_NOT_AVAILABLE` / `SEAT_BUSY` / `USER_HAS_ACTIVE_RESERVATION`, 403 `USER_BANNED` / `INSUFFICIENT_CREDIT` / `FACE_VERIFICATION_REQUIRED` |
 | GET | `/reservations/me/active` | 200 `ReservationView`, or 204 | |
 | GET | `/reservations/me?limit=20` | history | |
 | POST | `/reservations/{id}/check-in` `{"qrCodeToken":"..."}` | 200 (ACTIVE, seat OCCUPIED) | 400 `INVALID_QR_CODE`, 409 `NO_PHYSICAL_PRESENCE`, 410 `RESERVATION_EXPIRED` |
@@ -36,12 +36,30 @@ Auth: `Authorization: Bearer <accessToken>` from `POST /auth/login`. 🔓 = publ
 
 `ReservationView` = `{id, seatCode, zoneCode, status, bookingSource, reservedAt, expireAt, checkInAt, checkOutAt, secondsUntilExpiry}`.
 
+`faceToken` is required while `app.face.enabled` (env `FACE_VERIFY_ENABLED`, on in docker-compose): it comes from
+`POST /face/verify`, is valid 120 s, belongs to one student and is spent by one booking.
+
+## Face verification (before every booking)
+Detection YOLOv8n-face → 106 landmarks → ArcFace (MobileFaceNet) embedding in **face-service**; backend-core keeps the
+template, compares (cosine ≥ `FACE_MATCH_THRESHOLD`, default 0.45) and issues the booking token. No photo is stored.
+
+| Method | Path | Success | Errors |
+|---|---|---|---|
+| GET | `/face/me` | `{enrolled, enrolledAt, model, requiredForBooking}` | |
+| POST | `/face/challenge` | `{challengeId, steps:["CENTER","LEFT","RIGHT"], expiresAt}` (90 s, single use; LEFT/RIGHT order is random) | 429 `FACE_VERIFY_LOCKED` |
+| POST | `/face/enroll` `{challengeId, consent:true, frames:[{step, image}]}` | 200 face status | 400 `CONSENT_REQUIRED` / `INVALID_IMAGE`, 409 `FACE_ALREADY_ENROLLED`, 410 `FACE_CHALLENGE_EXPIRED`, 422 `NO_FACE` / `MULTIPLE_FACES` / `FACE_LIVENESS_FAILED`, 503 `FACE_SERVICE_UNAVAILABLE` |
+| POST | `/face/verify` `{challengeId, frames:[{step, image}]}` | `{faceToken, score, expiresAt}` | 409 `FACE_NOT_ENROLLED`, 410, 422 `FACE_NOT_MATCHED` / `NO_FACE` / `MULTIPLE_FACES` / `FACE_LIVENESS_FAILED`, 429 `FACE_VERIFY_LOCKED` (5 liveness/match failures in 10 min), 503 |
+| DELETE | `/face/me` | 204 (withdraw consent: template deleted) | |
+
+`frames`: up to 12 base64 JPEGs (≈480 px wide), each tagged with the challenge step it was captured for, taken from the
+**un-mirrored** front camera ("LEFT" = the student's own left).
+
 ## AI tool endpoints (called by ai-service with the student's forwarded JWT)
 | Tool | Endpoint |
 |---|---|
 | `find_optimal_seats(zone_preference, is_quiet_zone, has_power_outlet, seat_type)` | GET `/ai-tools/optimal-seats?zonePreference=&isQuietZone=&hasPowerOutlet=&seatType=&limit=` |
 | `get_occupancy_forecast(zone_code, target_hour)` | GET `/ai-tools/occupancy?zoneCode=` (live + last 24 h), combined with ai-service's own forecast. |
-| `reserve_seat(seat_code)` | POST `/ai-tools/reservations` `{"seatCode":"B-07"}` → books for the **token's** user with source `AI_CHATBOT`. |
+| `reserve_seat(seat_code)` | POST `/ai-tools/reservations` `{"seatCode":"B-07"}` → books for the **token's** user with source `AI_CHATBOT`. With face verification on it returns 403 `FACE_VERIFICATION_REQUIRED`; the web app then shows a button that runs the face check and calls `POST /reservations` with `source: AI_CHATBOT`. |
 
 ## AI (proxied to ai-service, same paths)
 | Method | Path | Notes |
@@ -59,6 +77,7 @@ Auth: `Authorization: Bearer <accessToken>` from `POST /auth/login`. 🔓 = publ
 | GET | `/admin/devices` | `[{deviceId, seatCode, zoneCode, simulated, online, lastHeartbeat, thresholdCm, mqttTopic}]` |
 | GET | `/admin/users?q=&limit=` | search by code / name / email |
 | PATCH | `/admin/users/{id}/credit` | `{"delta":10,"reason":"appeal accepted","clearBan":true}` |
+| DELETE | `/admin/users/{id}/face` | 204 – reset the enrolled face (student enrols again at the next booking) |
 | POST | `/admin/seats/{seatCode}/force-release` | 204 |
 | GET | `/admin/seats/qr?zone=` | QR tokens for printing table stickers |
 | GET | `/admin/occupancy/hourly?from=&to=` | heatmap rows (ISO-8601 instants; default last 7 days) |

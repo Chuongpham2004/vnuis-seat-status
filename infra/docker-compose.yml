@@ -108,6 +108,11 @@ services:
       MQTT_PASSWORD: ${MQTT_BACKEND_PASSWORD:-backend_dev_pw}
       JWT_SECRET: ${JWT_SECRET:-change-me-dev-only-secret-at-least-32-bytes-long}
       AI_SERVICE_URL: http://ai-service:8000
+      # Face check (YOLOv8-face + ArcFace) before every booking; "false" = book without it
+      FACE_VERIFY_ENABLED: ${FACE_VERIFY_ENABLED:-true}
+      FACE_SERVICE_URL: http://face-service:8001
+      FACE_INTERNAL_KEY: ${FACE_INTERNAL_KEY:-change-me-dev-face-key}
+      FACE_MATCH_THRESHOLD: ${FACE_MATCH_THRESHOLD:-0.45}
     ports:
       - "${BACKEND_PORT:-8080}:8080"
     depends_on:
@@ -142,6 +147,18 @@ services:
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }
+
+  # Internal only (no host port): backend-core is the single caller, authenticated by X-Internal-Key.
+  # The image bakes the ONNX models in (~35 MB), so the first build downloads ~140 MB once.
+  face-service:
+    build: ../face-service
+    container_name: lib-face
+    profiles: ["app"]
+    environment:
+      INTERNAL_KEY: ${FACE_INTERNAL_KEY:-change-me-dev-face-key}
+      ONNX_THREADS: ${FACE_ONNX_THREADS:-2}
+      YAW_CENTER_MAX: ${FACE_YAW_CENTER_MAX:-0.12}
+      YAW_TURN_MIN: ${FACE_YAW_TURN_MIN:-0.25}
 
   iot-simulator:
     build: ../iot-simulator

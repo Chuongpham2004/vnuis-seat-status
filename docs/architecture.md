@@ -16,6 +16,7 @@ flowchart LR
     subgraph Backend
         BE[backend-core<br/>Spring Boot 3 / Java 25]
         AI[ai-service<br/>FastAPI: XGBoost + Claude agent]
+        FS[face-service<br/>FastAPI + ONNX Runtime:<br/>YOLOv8-face + ArcFace]
     end
 
     FE[frontend-web<br/>React + STOMP]
@@ -31,6 +32,7 @@ flowchart LR
     AI -- tool calls with user JWT --> BE
     AI <-- read stats --> PG
     AI <--> LLM
+    BE -- frames, X-Internal-Key --> FS
     FE -- REST /api --> BE
     BE -- STOMP /ws --> FE
 ```
@@ -63,7 +65,40 @@ stateDiagram-v2
 | `timer:seat:walkin:{seat_code}` | string | 120 s | presence must hold this long to become a walk-in |
 | `timer:seat:awaypending:{seat_code}` | string | 60 s | absence must hold this long to become AWAY |
 | `cache:forecast:zone:{zone_code}:{YYYY-MM-DD}` | JSON string | 3600 s | forecast cache |
+| `face:challenge:{id}` | string `userId\|CENTER,LEFT,RIGHT` | 90 s | head-turn challenge, spent by one enrol/verify |
+| `face:token:{token}` | string userId | 120 s | proof of a passed face check, spent by one booking |
+| `face:fail:{user_id}` | counter | 600 s | liveness/match failures; 5 → `FACE_VERIFY_LOCKED` |
 
 A seat whose sensor goes OFFLINE is treated as empty: OCCUPIED moves to AWAY immediately, and the away timer releases it unless the device comes back and detects the student. The same check runs at startup for devices that died while the backend was down.
 
 Redis expiry events are best-effort (they can fire late and are lost while the backend is down), so a reconciliation job in backend-core re-checks deadlines from PostgreSQL every 30 s.
+
+## Face verification before booking
+
+```mermaid
+sequenceDiagram
+    participant FE as frontend-web
+    participant BE as backend-core
+    participant FS as face-service
+    FE->>BE: POST /face/challenge
+    BE-->>FE: {challengeId, steps: CENTER + random LEFT/RIGHT}
+    Note over FE: front camera, ~3 frames per step
+    FE->>BE: POST /face/verify {challengeId, frames}
+    BE->>FS: POST /v1/analyze {steps, frames}
+    Note over FS: YOLOv8n-face box → 2d106det landmarks → 5 points<br/>yaw per frame → liveness · align 112×112 → ArcFace 512-d
+    FS-->>BE: {status, embedding, frames[yaw, pose]}
+    Note over BE: cosine(template, probe) ≥ 0.45
+    BE-->>FE: {faceToken (120 s, single use)}
+    FE->>BE: POST /reservations {seatCode, faceToken}
+```
+
+- **Why two models:** YOLO only *detects* faces (where), it cannot tell *who*. ArcFace turns the aligned face into an
+  identity embedding; same person ≈ 0.6–0.95 cosine, different people < 0.25 on our checks.
+- **Liveness:** the student turns the head in a random order. A printed photo or a phone screen rotated in front of the
+  camera keeps the nose on the eye midline (no parallax), so the yaw never reaches the "turned" threshold; all frames
+  must also belong to the same face. A pre-recorded video with the same random order could still pass – documented limitation.
+- **Privacy:** face-service is stateless and not exposed on the host; only the 512-d template (2 KB `bytea`) is stored,
+  with the consent time (Decree 13/2023/ND-CP). `ai_reader` is denied access to `face_profiles`. Students can delete it.
+- **Enrolment:** self-service on the first booking, once; replacing it needs a librarian reset. In production, enrolment
+  would happen at the library desk against the student card, since a self-enrolled face only proves "same person as at enrolment".
+- `FACE_VERIFY_ENABLED=false` turns the whole check off (bookings need no token).

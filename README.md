@@ -13,6 +13,7 @@ Graduation capstone: real-time library seat monitoring (ESP32 + HC-SR04 and a mu
 | `iot-edge/` | ESP32 + HC-SR04 firmware (PlatformIO) for seat A-01: see [iot-edge/README.md](iot-edge/README.md) | ✅ Phase 3 |
 | `iot-simulator/` | 59 virtual seats over MQTT, ambient waves + demo CLI/HTTP control: see [iot-simulator/README.md](iot-simulator/README.md) | ✅ Phase 3 |
 | `ai-service/` | FastAPI: synthetic history, LightGBM vs. moving-average forecast (MAE/RMSE/MAPE/R²), tool-calling assistant (Claude/OpenAI/Gemini/Ollama or the built-in deterministic engine): see [ai-service/README.md](ai-service/README.md) | ✅ Phase 4 |
+| `face-service/` | FastAPI + ONNX Runtime: YOLOv8n-face detection, ArcFace embedding and head-turn liveness for the face check before each booking: see [face-service/README.md](face-service/README.md) | ✅ Phase 6 |
 | `frontend-web/` | React 19 (Vite) + Tailwind 4 + STOMP — live seat map, booking & QR check-in, forecasts, AI assistant, admin dashboard / devices / credit / QR / model metrics: see [frontend-web/README.md](frontend-web/README.md) | ✅ Phase 5 |
 | `docs/` | Architecture, MQTT contract, REST/WebSocket API | |
 
