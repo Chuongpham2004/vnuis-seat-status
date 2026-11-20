@@ -195,3 +195,12 @@ def test_openai_compatible_adapter_round_trip():
     assert turn.tool_calls[0].arguments == {"zone_code": "B"}
     assert sent["messages"][0] == {"role": "system", "content": "sys"}
     assert sent["tools"][0]["type"] == "function"
+
+
+def test_face_verification_required_reply_points_to_the_button():
+    from app.agent.deterministic import error_reply
+
+    vi = error_reply({"status": 403, "code": "FACE_VERIFICATION_REQUIRED", "detail": "x"}, "vi", "A-05")
+    en = error_reply({"status": 403, "code": "FACE_VERIFICATION_REQUIRED", "detail": "x"}, "en", "A-05")
+    assert "xác thực khuôn mặt" in vi and "A-05" in vi
+    assert "face check" in en

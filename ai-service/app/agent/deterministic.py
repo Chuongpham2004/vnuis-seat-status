@@ -87,6 +87,9 @@ def error_reply(err: dict[str, Any], lang: str, seat_code: str | None = None) ->
     if code == "INSUFFICIENT_CREDIT":
         return ("Điểm uy tín của bạn chưa đủ (cần ít nhất 60) để đặt chỗ trước." if vi
                 else "Your credit score is too low (minimum 60) to book in advance.")
+    if code == "FACE_VERIFICATION_REQUIRED":
+        return (f"Để đặt ghế {s}, bạn cần xác thực khuôn mặt. Bấm nút \"Xác thực khuôn mặt và đặt {s}\" bên dưới nhé."
+                if vi else f"Booking {s} needs a quick face check. Use the \"Verify face and book {s}\" button below.")
     if code == "SEAT_NOT_FOUND":
         return f"Không tìm thấy ghế {s}." if vi else f"There is no seat {s}."
     if err.get("status") == 401:

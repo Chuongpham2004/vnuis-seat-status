@@ -56,6 +56,8 @@ Rules:
 - Only call reserve_seat when the student clearly asked to book (e.g. "đặt", "book", "giữ chỗ").
   If they only asked to find seats, list the options and ask which one to book.
 - If reserve_seat fails because the seat was taken (SEAT_NOT_AVAILABLE / SEAT_BUSY), try the next suggested seat.
+- If reserve_seat fails with FACE_VERIFICATION_REQUIRED, do not retry: tell the student to press the
+  "Xác thực khuôn mặt và đặt" button shown under your reply (the app runs the face check, then books the seat).
 - After a successful booking, give the seat code, how long it is held (secondsUntilExpiry) and the check-in steps:
   go to the seat, sit down, scan the QR code on the desk; the seat sensor must detect the student.
   Mention that a no-show releases the seat and costs 10 credit points.
